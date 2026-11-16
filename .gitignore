@@ -41,7 +41,7 @@ Project_topic.png
 # (Excluded to protect local data, comply with privacy safeguards, and maintain a lightweight repository)
 # Data: ignore everything by default, then whitelist small, shareable files
 data/*
-!data/README.md
+!data/readme.md
 !data/workloads/
 !data/raw/
 data/raw/*
@@ -54,5 +54,6 @@ results/*
 *.pcap
 *.pcapng
 docs/live_checks/*.json
+airtel_t0_raw_*/
 airtel_T0_raw_*/
 

@@ -22,7 +22,7 @@ Outputs:
     n6_protocol_availability.csv
     n7_workload_comparison.csv
     n8_network_health.csv
-    REPORT_JIO.md
+    report.md
 """
 
 from __future__ import annotations
@@ -423,8 +423,8 @@ Empirical measurement of transport protocol reachability on Reliance Jio:
 ## N7: Regional Workload Comparison (India vs Global on Jio)
 {md_table(n7)}
 """
-    (out / "REPORT_JIO.md").write_text(report, encoding="utf-8")
-    print(f"\nReport written to {out / 'REPORT_JIO.md'}")
+    (out / "report.md").write_text(report, encoding="utf-8")
+    print(f"\nReport written to {out / 'report.md'}")
 
 
 def main() -> int:

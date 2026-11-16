@@ -30,7 +30,7 @@ Outputs
     wp11_time_stability.csv
     wp13_defence_simulations.csv
     wp13_notes.txt
-    SUMMARY.md
+    summary.md
 """
 
 from __future__ import annotations
@@ -697,8 +697,8 @@ def write_summary(
         + _head(wp13)
         + "\n> **All results are simulated** (feature-vector perturbation, not measured traffic).\n",
     ]
-    (out / "SUMMARY.md").write_text("\n".join(sections), encoding="utf-8")
-    print(f"\n  → Summary written to {out / 'SUMMARY.md'}")
+    (out / "summary.md").write_text("\n".join(sections), encoding="utf-8")
+    print(f"\n  → Summary written to {out / 'summary.md'}")
 
 
 # ── main ──────────────────────────────────────────────────────────────────────

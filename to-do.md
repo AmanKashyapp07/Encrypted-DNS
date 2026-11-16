@@ -23,7 +23,7 @@ Combined checklist for the remaining project work.
 - The final headline policy selected `k=10`.
 - Both Global and India retained 100 domains at `k=10`.
 - Core Airtel output directory: `results/airtel_topup_20261113/`.
-- Core report: `results/airtel_topup_20261113/REPORT.md`.
+- Core report: `results/airtel_topup_20261113/report.md`.
 - Core result table: `results/airtel_topup_20261113/rq1_rq2_fingerprinting.csv`.
 - Core baselines: `results/airtel_topup_20261113/baselines.csv`.
 - The result table contains 16 slices: 2 workloads x 4 resolvers x 2 protocols.
@@ -31,7 +31,7 @@ Combined checklist for the remaining project work.
 - Protocols: DoH and DoH/3.
 - Headline analysis uses repeats 8-19, configured seeds 17/42/101, and 200 permutations.
 - Claims ledger: `docs/claims_ledger.csv`, currently containing 16 Airtel entries.
-- Live-check raw JSON files are ignored under `docs/live_checks/`; findings are documented in `docs/LIVE_CHECKS.md`.
+- Live-check raw JSON files are ignored under `docs/live_checks/`; findings are documented in `docs/live_checks.md`.
 - The eight live checks completed with q 0.19.12. Google showed a one-observation answer-count mismatch between HTTP/2 and HTTP/3; no exposed EDNS0 padding option was observed.
 
 ### Airtel commands
@@ -138,7 +138,7 @@ the original burst sequences.
 
 - [x] Install or locate `q` and run the eight serialized live checks.
 - [x] Save the live-check JSON outputs under `docs/live_checks/`.
-- [x] Update `docs/LIVE_CHECKS.md` with answer/CNAME parity, extra records, and EDNS0 padding findings.
+- [x] Update `docs/live_checks.md` with answer/CNAME parity, extra records, and EDNS0 padding findings.
 - [x] Run the final Airtel top-up pass for failed and slow captures. Imported run evidence: 20,262 manifest rows covering 19,200 unique capture keys, including 1,062 retries.
 - [x] Recompute the final Airtel dataset, drop reasons, domain-set policy, and success-rate summaries.
 - [x] Complete the Airtel integrity reset and verify that all headline results use the agreed seeds, 200 permutations, and target repeat policy.
@@ -163,7 +163,7 @@ the original burst sequences.
 - [x] Run pooled multi-network training and per-network evaluation (N3). Output: `results/jio_analysis_20261113/n3_pooled_training.csv`.
 - [x] Produce Jio network-health summaries (N8). Output: `results/jio_analysis_20261113/n8_network_health.csv`.
 - [x] Analyze cross-network feature shift, resolver ranking consistency, per-network DoH vs DoH/3, and Global vs Indian behavior (N4-N7). Output: `results/jio_analysis_20261113/` CSVs.
-- [x] Re-run final combined analyses after Jio data is merged. Master report: `results/jio_analysis_20261113/REPORT_JIO.md`.
+- [x] Re-run final combined analyses after Jio data is merged. Master report: `results/jio_analysis_20261113/report.md`.
 
 ## Jio work remaining
 
@@ -171,13 +171,13 @@ the original burst sequences.
 
 ## Paper and slides
 
-- [x] Write the Introduction. Draft: `docs/PAPER_DRAFT.md`.
-- [x] Write Related Work and include the research gap. Draft: `docs/PAPER_DRAFT.md`.
-- [x] Write the Threat Model and Methodology. Draft: `docs/PAPER_DRAFT.md`.
-- [x] Write Airtel Results using only verified ledger values. Draft: `docs/PAPER_DRAFT.md`.
-- [x] Add Jio and cross-network Results after Jio analysis is complete. Draft: `docs/PAPER_DRAFT.md` (Sections 5.2 and 5.3).
-- [x] Write Discussion, Limitations, Ethics, and Reproducibility sections. Draft: `docs/PAPER_DRAFT.md`.
-- [x] Create the slide deck using figures generated from `results/`. Deck: `docs/PRESENTATION_SLIDES.md`, Figures: `results/figures/`.
+- [x] Write the Introduction. Draft: `docs/paper.md`.
+- [x] Write Related Work and include the research gap. Draft: `docs/paper.md`.
+- [x] Write the Threat Model and Methodology. Draft: `docs/paper.md`.
+- [x] Write Airtel Results using only verified ledger values. Draft: `docs/paper.md`.
+- [x] Add Jio and cross-network Results after Jio analysis is complete. Draft: `docs/paper.md` (Sections 5.2 and 5.3).
+- [x] Write Discussion, Limitations, Ethics, and Reproducibility sections. Draft: `docs/paper.md`.
+- [x] Create the slide deck using figures generated from `results/`. Deck: `docs/presentation`, Figures: `results/figures/`.
 - [x] State all exclusions and limitations: page loads, other clients, DoQ, ODoH, and Quad9 on Jio.
 
 ## Verification and release

@@ -237,7 +237,7 @@ def run_e1(df, a, out):
                          "accuracy": round(np.mean(accs), 4), "acc_sd_over_seeds": round(np.std(accs), 4),
                          "macro_f1": round(np.mean(f1s), 4)})
     res = pd.DataFrame(rows)
-    res.to_csv(out / "E1_protocol_id.csv", index=False)
+    res.to_csv(out / "e1_protocol_id.csv", index=False)
     if conf:
         labels, cm = conf
         fig, ax = plt.subplots(figsize=(4.2, 3.8))
@@ -252,7 +252,7 @@ def run_e1(df, a, out):
                 ax.text(j, i, cm[i, j], ha="center", va="center",
                         color="white" if cm[i, j] > cm.max() / 2 else "black")
         fig.tight_layout()
-        fig.savefig(out / "E1_confusion_doh_doh3.png", dpi=160)
+        fig.savefig(out / "e1_confusion_doh_doh3.png", dpi=160)
         plt.close(fig)
     return res
 

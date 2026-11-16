@@ -212,7 +212,7 @@ def report(args: argparse.Namespace) -> int:
     table = pd.read_csv(table_path)
     lines = ["# Analysis report", "", "All claims below are derived from the run CSV.", "", table.to_markdown(index=False), ""]
     lines.append("A non-significant result means no detectable leakage at this sample size.")
-    (directory / "REPORT.md").write_text("\n".join(lines), encoding="utf-8")
+    (directory / "report.md").write_text("\n".join(lines), encoding="utf-8")
     return 0
 
 def ledger(args: argparse.Namespace) -> int:

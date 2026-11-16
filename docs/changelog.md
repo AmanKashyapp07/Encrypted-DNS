@@ -161,7 +161,7 @@ contains recognizable padding evidence, `false` when an exposed OPT response
 proves no padding, and `unknown` when q output is insufficient.
 
 **Affected code:** `parse_q_json()`, `tests/test_q_metadata.py`, fixtures, and
-`docs/METHODOLOGY.md`.
+`docs/methodology.md`.
 
 **Reasoning:** `unknown` distinguishes “not observable” from “not present” and
 prevents a measurement limitation from becoming a false experimental result.
@@ -223,7 +223,7 @@ the driver.
 
 **Affected code:** `src/probe_and_capture.py`,
 `scripts/run_overnight.ps1`, `scripts/run_overnight.sh`,
-`docs/RUNBOOK_CAPTURE.md`, and `docs/EXPERIMENT_PROTOCOL.md`.
+`docs/runbook.md`, and `docs/EXPERIMENT_PROTOCOL.md`.
 
 **Reasoning:** Isolation is enforced at the output-path boundary rather than
 by relying on batch labels. This protects against accidental collisions even
@@ -253,7 +253,7 @@ mixed-width rows cause a hard failure instead of silent truncation.
 
 **Affected code:** `upgrade_manifest()` and `validate_manifest()` in
 `src/probe_and_capture.py`, manifest tests in `tests/test_manifest.py`, the
-smoke schema output in `src/encdns/cli.py`, and `docs/ETHICS.md`.
+smoke schema output in `src/encdns/cli.py`, and `docs/ethics.md`.
 
 **Reasoning:** Backup-before-rewrite gives a recovery point; hard validation
 prevents data corruption; hashing legacy values enforces the privacy boundary

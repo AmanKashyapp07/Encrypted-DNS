@@ -1,4 +1,4 @@
-# Network plan and task split: see docs/TEAM_PLAN.md (supersedes this file)
+# Network plan and task split: see docs/team.md (supersedes this file)
 # Project Handover: Encrypted DNS Privacy Analysis (DoH vs DoH/3)
 
 Version: updated 2026-11-10 from the completed Airtel capture state.
@@ -68,7 +68,7 @@ Version: updated 2026-11-10 from the completed Airtel capture state.
 | WP5 resolver and network comparison | Airtel resolver outputs generated; additional networks not collected |
 | WP6 Global vs Indian | Airtel Global/India outputs generated |
 | Raw data backup location and checksums | `data/snapshots/overnight_20261110_2209_20261109_230331_22448/SHA256SUMS.csv` (0.202 GiB, 19,201 source files) |
-| Live check results (answer counts, EDNS0 padding) | Blocked: q unavailable; see `docs/LIVE_CHECKS.md` |
+| Live check results (answer counts, EDNS0 padding) | Blocked: q unavailable; see `docs/live_checks.md` |
 
 Observed during capture (snapshot at 14,119 of 19,200 jobs): success rates ranged from about 88% (Quad9 DoH/3, worst at night) to 99.9% (Google). AdGuard was about 91%. Answer and CNAME counts matched between DoH and DoH/3 in about 94-99% of pairs. TTL differences were common and are cache effects.
 
@@ -86,8 +86,8 @@ Observed during capture (snapshot at 14,119 of 19,200 jobs): success rates range
 | `src/probe_and_capture.py` | Capture driver (needs `q`, `dumpcap`, `tshark`) |
 | `src/extract_features.py` | pcaps to feature rows, with timeouts, caching, drop reasons |
 | `src/encdns/` | Package and CLI: `status`, `analyze`, `report`, `ledger`, `merge-runs`, `smoke-check` |
-| `scripts/` | `run_overnight`, `run_network`, `run_drift_T1`, `preflight` |
-| `docs/` | `METHODOLOGY`, `RUNBOOK_CAPTURE`, `TEAMMATE_QUICKSTART`, `POST_CAPTURE_CHECKLIST`, `ETHICS`, `LIVE_CHECKS`, `OPEN_ITEMS`, claims ledger |
+| `scripts/` | `run_overnight`, `run_network`, `run_drift_t1`, `preflight` |
+| `docs/` | `overview.md`, `runbook.md`, `quickstart.md`, `checklist.md`, `ethics.md`, `live_checks.md`, `open_items.md`, claims ledger |
 | `results/<run_id>/` | Generated outputs only, each with run metadata |
 
 ---
@@ -99,7 +99,7 @@ All commands run from the repository root with the virtual environment active.
 1. **Health check:** `python -m encdns status`
 2. **Preflight on a capture machine:** `scripts/preflight` (use `--no-live` if a capture is running)
 3. **Capture on a new network:** `scripts/run_network` with the network label as a parameter. About 13 hours including margin.
-4. **Drift batch T1:** `scripts/run_drift_T1`. Same laptop and network as T0, planned for 2026-11-15.
+4. **Drift batch T1:** `scripts/run_drift_t1`. Same laptop and network as T0, planned for 2026-11-15.
 5. **Analysis:** `python -m encdns analyze`, then `report`, then `ledger`.
 
 **Hard rules while any capture runs:** no other live DNS queries, no writes under `data/raw/`, no edits to files the capture imports, no heavy CPU jobs on that machine, no VPN, no network switching, no sleep. Work from copied snapshots.
@@ -166,7 +166,7 @@ Cut list if time runs out (cut in this order): WP12, D3, WP8, WP13, WP9. **Never
 - No result number may be typed into code or text by hand. Numbers come from `results/` and the claims ledger.
 - All headline results use repeats 8-19, target k=10, the agreed domain set, 200 permutations.
 - Do not mention tools, assistants, or automation in the repository, commits, or documents.
-- Capture only our own traffic, rate-limited, and only on networks we have permission to use. See `docs/ETHICS.md`.
+- Capture only our own traffic, rate-limited, and only on networks we have permission to use. See `docs/ethics.md`.
 
 ---
 
@@ -202,7 +202,7 @@ Cut list if time runs out (cut in this order): WP12, D3, WP8, WP13, WP9. **Never
 - Shared data location (checksummed backup of the T0 run): `data/snapshots/overnight_20261110_2209_20261109_230331_22448`
 - GitHub repository and branch policy: `rkbhati04/RM_project`; do not push from this handover
 
-## 12. Open items **[FILL from docs/OPEN_ITEMS.md]**
+## 12. Open items **[FILL from docs/open_items.md]**
 
 - Approval and an operator for Network 2.
 - Teammate with access to a second network.

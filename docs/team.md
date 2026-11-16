@@ -1,6 +1,6 @@
 # Team Plan: Remaining Work (2026-11-11 to 2026-11-17)
 
-This file supersedes every earlier network plan in `HANDOVER.md`, the runbook, the quickstart and `docs/issues/`. Two teammates carry the project from here: **Aman** and **Kunal**. The project lead's part ends once the Airtel results and this repository are pushed. Work continues until the night of **2026-11-17**.
+This file supersedes every earlier network plan in `handover.md`, the runbook, the quickstart and `docs/issues/`. Two teammates carry the project from here: **Aman** and **Kunal**. The project lead's part ends once the Airtel results and this repository are pushed. Work continues until the night of **2026-11-17**.
 
 ---
 
@@ -76,8 +76,8 @@ Rules: same domain set on every network, same k, 200 permutations, intervals eve
 
 | ID | Task | When |
 |---|---|---|
-| AM1 | Set up the laptop (Python venv, `q`, Wireshark/Npcap), run `scripts/preflight` with `--no-live`, and read `docs/LIVE_CHECKS.md` | 11 Nov, before capture |
-| AM2 | **Live checks:** run the eight `q` queries in `docs/LIVE_CHECKS.md` (4 resolvers x HTTP/2 and HTTP/3, one at a time, with pauses), save the raw JSON under `docs/live_checks/`, and write the findings (answer and CNAME parity, extra record types, whether an EDNS0 padding option appears) into `docs/LIVE_CHECKS.md`. Takes about 10 minutes. Do this **before** the Jio capture starts. | 11 Nov |
+| AM1 | Set up the laptop (Python venv, `q`, Wireshark/Npcap), run `scripts/preflight` with `--no-live`, and read `docs/live_checks.md` | 11 Nov, before capture |
+| AM2 | **Live checks:** run the eight `q` queries in `docs/live_checks.md` (4 resolvers x HTTP/2 and HTTP/3, one at a time, with pauses), save the raw JSON under `docs/live_checks/`, and write the findings (answer and CNAME parity, extra record types, whether an EDNS0 padding option appears) into `docs/live_checks.md`. Takes about 10 minutes. Do this **before** the Jio capture starts. | 11 Nov |
 | AM3 | **Jio capture** with `scripts/run_network`, network label `jio`, the matrix in section 1 | **Start the night of 11 Nov** |
 | AM4 | Merge Jio data, extract features for the Jio manifest only, then run N1, N2, N3, N8 | 12 Nov |
 | AM5 | **Campus capture on his own laptop too (machine control)** | 16 Nov |
@@ -87,7 +87,7 @@ Rules: same domain set on every network, same k, 200 permutations, intervals eve
 
 | ID | Task | When |
 |---|---|---|
-| KU1 | Review the Airtel WP3-WP6 results against `METHODOLOGY.md`; flag anything odd | As soon as results are pushed |
+| KU1 | Review the Airtel WP3-WP6 results against `methodology.md`; flag anything odd | As soon as results are pushed |
 | KU2 | WP7 richer features (start on `dataset_pilot_v1.csv`, rerun on `dataset_v2.csv`) | 11-12 Nov |
 | KU3 | WP10 scaling curves, WP11 pilot-vs-T0 stability | 12-13 Nov |
 | KU4 | N4, N5, N6, N7 as soon as Jio data is merged | 12-14 Nov |
