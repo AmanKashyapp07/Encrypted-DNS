@@ -105,6 +105,20 @@ class TestJioReport(unittest.TestCase):
             bullets = [line for line in n1_section.group(1).splitlines() if line.startswith("- **")]
             self.assertEqual(len(bullets), 2)
 
+    def test_n2_and_n3_findings_language(self):
+        """Ensure N2 and N3 findings avoid overclaiming and accurately state empirical results."""
+        text = self.report_path.read_text(encoding="utf-8")
+
+        # N2: Should not overclaim absolute non-generalization without an equivalence test
+        self.assertNotIn("Models trained on fixed broadband do not generalize to cellular traffic without multi-network training.", text)
+        self.assertIn("Across the evaluated cross-network slices, transfer accuracy remained close to the 2.0% chance baseline (1.7%–2.4%)", text)
+        self.assertIn("indicate substantial cross-network performance degradation", text)
+
+        # N3: Should not claim uniform blanket recovery across networks
+        self.assertNotIn("Multi-network training successfully recovers accuracy when evaluating on either network", text)
+        self.assertIn("recovery is resolver-dependent", text)
+        self.assertIn("Google achieves 13.3%–15.0% accuracy, while AdGuard achieves 3.4%–4.4%", text)
+
 
 if __name__ == "__main__":
     unittest.main()

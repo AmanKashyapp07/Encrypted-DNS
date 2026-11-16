@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-verify_research_results.py — Automated numerical consistency and provenance checker.
+verify_research_results.py — Automated numerical consistency and Git-history verification suite.
 
 Verifies:
   1. Dataset row counts and network partitions.
@@ -10,8 +10,14 @@ Verifies:
   5. Jio DoH/3 client-side reachability audit (100% timeouts on UDP 443).
   6. Model comparison values on AdGuard DoH Global.
 
-Note: This tool verifies data provenance, numerical reproducibility, and schema integrity
-against generated experimental outputs; it does not replace scientific peer review.
+Scope & Provenance Note:
+This tool performs numerical consistency and Git-history verification of reported research claims.
+It verifies that each recorded claim matches its underlying result CSV within strict numerical
+tolerances (accuracy ±0.005, CIs ±0.01) and that the recorded commit SHA exists in the local Git history.
+It does not certify an end-to-end cryptographic provenance chain (such as input dataset SHA-256 hashes,
+execution environment hashes, or deterministic pipeline rerun certification against recorded commits).
+For stronger future reproducibility, recording dataset hashes, script/configuration hashes,
+random seeds, and the generating commit for each analytical run is recommended.
 """
 
 from __future__ import annotations
@@ -190,7 +196,7 @@ def verify_model_comparisons() -> bool:
 
 
 def verify_claims_ledger() -> bool:
-    print("[6/6] Verifying claims ledger consistency, confidence intervals, and data provenance...")
+    print("[6/6] Verifying claims ledger numerical consistency, confidence intervals, and Git history...")
     import re
     import subprocess
 
@@ -311,7 +317,7 @@ def verify_claims_ledger() -> bool:
 
 def main() -> int:
     print("=" * 70)
-    print("Encrypted DNS Artifact Provenance & Numerical Verification Suite")
+    print("Encrypted DNS Numerical Consistency & Git-History Verification Suite")
     print("=" * 70)
 
     checks = [
@@ -330,7 +336,7 @@ def main() -> int:
         print()
 
     print("=" * 70)
-    print("ALL 6 ARTIFACT & NUMERICAL CONSISTENCY CHECKS PASSED")
+    print("ALL 6 NUMERICAL CONSISTENCY & CLAIMS VERIFICATION CHECKS PASSED")
     print("=" * 70)
     return 0
 

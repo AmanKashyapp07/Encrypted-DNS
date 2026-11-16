@@ -84,3 +84,19 @@ To evaluate whether flow distributions differ significantly across physical acce
   $$D = \sup_x |F_{\text{Airtel}}(x) - F_{\text{Jio}}(x)|$$
   where $D \in [0, 1]$ ($0 = \text{identical distributions}, 1 = \text{complete non-overlapping shift}$).
 * Features with $D > 0.80$ and $p < 10^{-6}$ indicate severe link-layer distribution shifts that invalidate static decision boundaries.
+
+---
+
+## 6. Numerical Consistency & Artifact Verification Scope
+
+To ensure statistical and empirical consistency across manuscript claims, result CSVs, and repository history, the repository includes an automated verification suite (`scripts/verify_research_results.py`).
+
+* **Verification Scope:**
+  1. Verifies dataset row counts and partitions (`dataset_v2.csv` = 18,926, `dataset_jio.csv` = 1,912, `dataset_combined.csv` = 20,838).
+  2. Verifies the complete 44-dimensional feature representation matching feature extraction definitions.
+  3. Validates theoretical closed-world chance baselines (1.0% for 100 classes, 2.0% for 50 classes).
+  4. Confirms that all 3,000 Jio DoH/3 queries timed out on UDP 443 with 0.0% completion.
+  5. Validates non-linear tree ensemble vs deep sequence model comparisons on AdGuard DoH Global.
+  6. Numerically validates all 39 empirical research claims in `docs/claims_ledger.csv` against their source CSV artifacts (accuracy within $\pm 0.005$, confidence interval bounds within $\pm 0.01$, sample sizes exactly matching) and confirms that all recorded commit SHAs exist in Git history.
+* **Provenance Qualification:**
+  We explicitly distinguish numerical consistency and Git-history verification from complete cryptographic artifact provenance. The verifier validates that published claims match generated result CSVs within strict tolerances and that recorded commits exist; it does not verify input dataset SHA-256 hashes, script/environment hashes, or deterministic pipeline rerun certification against recorded commits. For stronger future reproducibility, recording dataset hashes, configuration hashes, random seeds, and the generating commit for each analytical run is recommended.

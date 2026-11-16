@@ -429,8 +429,7 @@ Evaluating whether an attacker trained on Airtel can fingerprint victims on Jio,
 {md_table(n2)}
 
 **Key Findings:**
-- **Cross-network transfer accuracy drops close to chance level (1.7%–2.4% vs 2.0% baseline)**, with domain-clustered bootstrap confidence intervals spanning chance across all evaluated slices.
-- Models trained on fixed broadband do not generalize to cellular traffic without multi-network training.
+- Across the evaluated cross-network slices, transfer accuracy remained close to the 2.0% chance baseline (1.7%–2.4%), with domain-clustered bootstrap confidence intervals spanning chance. These observations indicate substantial cross-network performance degradation under the tested conditions.
 
 ---
 
@@ -440,7 +439,7 @@ Evaluating whether pooling training data across Airtel + Jio restores fingerprin
 {md_table(n3)}
 
 **Key Findings:**
-- Multi-network training successfully recovers accuracy when evaluating on either network, showing that an adversary with vantage points across multiple ISPs can build robust multi-carrier models.
+- Pooling training data across both networks yields composite test accuracies of 15.4%–19.2% (and 19.3%–33.7% on held-out broadband traces). On held-out cellular traces, recovery is resolver-dependent: Google achieves 13.3%–15.0% accuracy, while AdGuard achieves 3.4%–4.4% (against the 2.0% chance baseline).
 
 ---
 
