@@ -160,7 +160,6 @@ All results are written deterministically to `results/airtel_all_20261113/`, `re
 ├── contributing.md            # Guidelines for contributing
 ├── license                    # MIT License file
 ├── requirements.txt           # Python dependency specifications
-├── to-do.md                   # Verification and deliverable audit checklist
 ├── docs/
 │   ├── paper.md               # Full academic research paper (9 sections, 9 tables)
 │   ├── dataset.md             # Capture matrix, filtering criteria, and drop accounting

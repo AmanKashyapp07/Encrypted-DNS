@@ -53,7 +53,6 @@ results/*
 !results/figures/
 *.pcap
 *.pcapng
-docs/live_checks/*.json
 airtel_t0_raw_*/
 airtel_T0_raw_*/
 

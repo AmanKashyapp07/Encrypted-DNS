@@ -44,7 +44,7 @@ This document articulates the explicit boundaries, experimental constraints, and
 * **Limitation:** No live network defenses (such as RFC 7830 / RFC 8467 EDNS0 padding on upstream resolvers, or client-side proxy padding) were deployed or measured on the wire. Real-world protocol defenses interact with QUIC frame packing, congestion control, and connection coalescing in ways that offline feature perturbation cannot fully capture.
 
 ### 3.2 EDNS0 Padding Inconclusiveness
-* **Observation:** In live resolver diagnostics (`docs/live_checks/`), EDNS0 padding options were not exposed in `q` client JSON responses.
+* **Observation:** In live resolver diagnostics with `q`, EDNS0 padding options were not exposed in client JSON responses.
 * **Limitation:** The lack of exposed padding in client JSON records does not conclusively prove that upstream resolvers completely omit padding at the physical wire level. Confirming wire-level EDNS0 padding requires byte-level dissection of decrypted DNS payloads within the TLS/QUIC stream.
 
 ---
