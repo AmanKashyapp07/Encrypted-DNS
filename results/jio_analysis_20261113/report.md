@@ -9,7 +9,7 @@ This report analyzes the measured Reliance Jio mobile cellular dataset (6,000 ca
 ---
 
 ## N1: Within-Jio Fingerprinting Performance
-Evaluated using repeat-range temporal partition (repeats 0–7 train, 8–9 test, 3-seed Random Forest):
+Evaluated using repeat-range temporal partition (repeats 0–7 train, 8–9 test, 3-seed Random Forest). Reported p-values are nominal unadjusted permutation tests:
 
 | workload | resolver | protocol | domains | n_train | n_test | train_repeats | test_repeats | accuracy | accuracy_sd | ci_low | ci_high | ci_boot_low | ci_boot_high | chance | p_value | dropped_domains |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -20,12 +20,10 @@ Evaluated using repeat-range temporal partition (repeats 0–7 train, 8–9 test
 
 
 **Key Findings:**
-- **Adguard DoH (Global):** Achieves **4.1%** accuracy (vs 2.0% chance, n_test=98), not statistically distinguishable from chance (p = 0.1244).
-- **Google DoH (Global):** Achieves **15.7%** accuracy (vs 2.0% chance, n_test=100), statistically significant (p = 0.0050).
-- **Adguard DoH (India):** Achieves **6.8%** accuracy (vs 2.4% chance, n_test=79), statistically significant (p = 0.0249).
-- **Google DoH (India):** Achieves **12.3%** accuracy (vs 2.0% chance, n_test=100), statistically significant (p = 0.0050).
-- Google DoH remains statistically significant above chance across both workloads (p = 0.005).
-- AdGuard DoH achieves statistical significance on the India workload (p = 0.0249, 42 domains), while on the Global workload it is not statistically distinguishable from the 2.0% chance baseline (p = 0.1244).
+- **AdGuard DoH (Global):** Achieves **4.1%** accuracy (vs 2.0% chance, n_test=98), not statistically distinguishable from chance (nominal p = 0.1244).
+- **Google DoH (Global):** Achieves **15.7%** accuracy (vs 2.0% chance, n_test=100), statistically significant (nominal p = 0.0050).
+- **AdGuard DoH (India):** Achieves **6.8%** accuracy (vs 2.4% chance, n_test=79), statistically significant (nominal p = 0.0249).
+- **Google DoH (India):** Achieves **12.3%** accuracy (vs 2.0% chance, n_test=100), statistically significant (nominal p = 0.0050).
 
 ---
 
@@ -111,7 +109,7 @@ Empirical measurement of transport protocol reachability on Reliance Jio:
 
 **Key Findings:**
 - **DoH/3 (UDP 443 / QUIC) Inaccessibility:** All 3,000 DoH/3 queries timed out on UDP port 443 across Cloudflare, Google, and AdGuard (`udp_blocked_flag=true`, 0.0% completion rate), documenting client-side QUIC timeouts on the tested cellular link.
-- **Cloudflare DoH Edge Routing:** Cloudflare DoH on Jio mobile cellular exhibited a 98.5% drop rate due to cellular route instability to Cloudflare's anycast POPs.
+- **Cloudflare DoH Query Failures:** Cloudflare DoH on Jio mobile cellular exhibited a 98.5% query failure rate (15/1,000 completed); the underlying network or middlebox cause was not experimentally isolated.
 - **Google DoH:** 100% reliable (1,000/1,000 ok) with mean latency of ~170ms.
 - **AdGuard DoH:** 90.5% reliable (905/1,000 ok) with mean latency of ~210ms.
 

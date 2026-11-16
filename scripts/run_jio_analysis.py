@@ -388,18 +388,19 @@ def generate_report(out: Path, n1: pd.DataFrame, n2: pd.DataFrame, n3: pd.DataFr
         body = "\n".join("| " + " | ".join(str(v) for v in row) + " |" for row in sub.itertuples(index=False))
         return f"{hdr}\n{sep}\n{body}\n"
 
+    RESOLVER_NAMES = {"adguard": "AdGuard", "cloudflare": "Cloudflare", "google": "Google", "quad9": "Quad9"}
     n1_bullets = []
     for _, r in n1.iterrows():
         wl = str(r["workload"]).capitalize()
-        res = str(r["resolver"]).capitalize()
+        res = RESOLVER_NAMES.get(str(r["resolver"]).lower(), str(r["resolver"]).capitalize())
         acc = float(r["accuracy"]) * 100
         pval = float(r["p_value"])
         chance = float(r["chance"]) * 100
         n_test = int(r["n_test"])
         if pval < 0.05:
-            n1_bullets.append(f"- **{res} DoH ({wl}):** Achieves **{acc:.1f}%** accuracy (vs {chance:.1f}% chance, n_test={n_test}), statistically significant (p = {pval:.4f}).")
+            n1_bullets.append(f"- **{res} DoH ({wl}):** Achieves **{acc:.1f}%** accuracy (vs {chance:.1f}% chance, n_test={n_test}), statistically significant (nominal p = {pval:.4f}).")
         else:
-            n1_bullets.append(f"- **{res} DoH ({wl}):** Achieves **{acc:.1f}%** accuracy (vs {chance:.1f}% chance, n_test={n_test}), not statistically distinguishable from chance (p = {pval:.4f}).")
+            n1_bullets.append(f"- **{res} DoH ({wl}):** Achieves **{acc:.1f}%** accuracy (vs {chance:.1f}% chance, n_test={n_test}), not statistically distinguishable from chance (nominal p = {pval:.4f}).")
     n1_findings_str = "\n".join(n1_bullets)
 
     report = f"""# Jio and Cross-Network Empirical Findings (N1–N8)
@@ -413,14 +414,12 @@ This report analyzes the measured Reliance Jio mobile cellular dataset (6,000 ca
 ---
 
 ## N1: Within-Jio Fingerprinting Performance
-Evaluated using repeat-range temporal partition (repeats 0–7 train, 8–9 test, 3-seed Random Forest):
+Evaluated using repeat-range temporal partition (repeats 0–7 train, 8–9 test, 3-seed Random Forest). Reported p-values are nominal unadjusted permutation tests:
 
 {md_table(n1)}
 
 **Key Findings:**
 {n1_findings_str}
-- Google DoH remains statistically significant above chance across both workloads (p = 0.005).
-- AdGuard DoH achieves statistical significance on the India workload (p = 0.0249, 42 domains), while on the Global workload it is not statistically distinguishable from the 2.0% chance baseline (p = 0.1244).
 
 ---
 
@@ -462,7 +461,7 @@ Empirical measurement of transport protocol reachability on Reliance Jio:
 
 **Key Findings:**
 - **DoH/3 (UDP 443 / QUIC) Inaccessibility:** All 3,000 DoH/3 queries timed out on UDP port 443 across Cloudflare, Google, and AdGuard (`udp_blocked_flag=true`, 0.0% completion rate), documenting client-side QUIC timeouts on the tested cellular link.
-- **Cloudflare DoH Edge Routing:** Cloudflare DoH on Jio mobile cellular exhibited a 98.5% drop rate due to cellular route instability to Cloudflare's anycast POPs.
+- **Cloudflare DoH Query Failures:** Cloudflare DoH on Jio mobile cellular exhibited a 98.5% query failure rate (15/1,000 completed); the underlying network or middlebox cause was not experimentally isolated.
 - **Google DoH:** 100% reliable (1,000/1,000 ok) with mean latency of ~170ms.
 - **AdGuard DoH:** 90.5% reliable (905/1,000 ok) with mean latency of ~210ms.
 
