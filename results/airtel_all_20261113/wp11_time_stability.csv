@@ -1,0 +1,17 @@
+workload,resolver,protocol,train_repeats,test_repeats,domains,n_train,n_test,accuracy,accuracy_seed_sd,ci_lo,ci_hi
+global,adguard,doh,0-7 (pilot),8-19 (T0),25,200,300,0.0422,0.0016,0.0255,0.0727
+global,adguard,doh3,0-7 (pilot),8-19 (T0),25,200,300,0.0711,0.0057,0.0462,0.1046
+global,cloudflare,doh,0-7 (pilot),8-19 (T0),21,49,252,0.082,0.0082,0.0551,0.124
+global,cloudflare,doh3,0-7 (pilot),8-19 (T0),25,199,300,0.1111,0.0083,0.0794,0.1505
+global,google,doh,0-7 (pilot),8-19 (T0),25,200,300,0.04,0.0027,0.023,0.0686
+global,google,doh3,0-7 (pilot),8-19 (T0),25,200,300,0.0844,0.0087,0.0571,0.1201
+global,quad9,doh,0-7 (pilot),8-19 (T0),25,199,300,0.0422,0.0057,0.0255,0.0727
+global,quad9,doh3,0-7 (pilot),8-19 (T0),25,200,296,0.1329,0.0111,0.0979,0.175
+india,adguard,doh,0-7 (pilot),8-19 (T0),25,161,275,0.0315,0.0075,0.0173,0.061
+india,adguard,doh3,0-7 (pilot),8-19 (T0),25,162,273,0.0952,0.0187,0.0658,0.1359
+india,cloudflare,doh,0-7 (pilot),8-19 (T0),23,37,275,0.0594,0.0062,0.0361,0.0924
+india,cloudflare,doh3,0-7 (pilot),8-19 (T0),25,198,300,0.0856,0.0068,0.0598,0.124
+india,google,doh,0-7 (pilot),8-19 (T0),25,199,300,0.0367,0.0054,0.0206,0.0645
+india,google,doh3,0-7 (pilot),8-19 (T0),25,197,300,0.0811,0.0068,0.0543,0.1163
+india,quad9,doh,0-7 (pilot),8-19 (T0),25,198,294,0.0408,0.0,0.0235,0.07
+india,quad9,doh3,0-7 (pilot),8-19 (T0),25,198,279,0.0896,0.0117,0.0614,0.1289

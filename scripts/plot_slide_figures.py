@@ -36,104 +36,160 @@ plt.rcParams.update({
 
 
 def plot_headline_airtel():
-    # Data from claims ledger
+    fp_path = ROOT / "results/airtel_topup_20261113/rq1_rq2_fingerprinting.csv"
+    if not fp_path.exists():
+        print(f"Warning: {fp_path} not found, skipping fig1.")
+        return
+    df = pd.read_csv(fp_path)
     resolvers = ["AdGuard", "Cloudflare", "Google", "Quad9"]
     
-    # Global workload
-    doh_global = [0.262, 0.236, 0.175, 0.342]
-    doh3_global = [0.089, 0.060, 0.169, 0.046]
-    
-    # India workload
-    doh_india = [0.233, 0.195, 0.148, 0.310]
-    doh3_india = [0.092, 0.053, 0.101, 0.051]
-    
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5), sharey=True, constrained_layout=True)
     x = np.arange(len(resolvers))
     width = 0.35
-    
-    fig, axes = plt.subplots(1, 2, figsize=(12, 5), sharey=True, constrained_layout=True)
-    
-    # Global subplot
-    axes[0].bar(x - width/2, doh_global, width, label="DoH (HTTP/2)", color="#1f77b4", edgecolor="black", alpha=0.9)
-    axes[0].bar(x + width/2, doh3_global, width, label="DoH/3 (QUIC)", color="#ff7f0e", edgecolor="black", alpha=0.9)
-    axes[0].axhline(0.010, color="red", linestyle="--", linewidth=1.5, label="Chance (1/100 = 1%)")
-    axes[0].set_title("Global Workload (100 domains)")
-    axes[0].set_xticks(x)
-    axes[0].set_xticklabels(resolvers)
-    axes[0].set_ylabel("Fingerprinting Accuracy")
-    axes[0].set_ylim(0, 0.40)
-    axes[0].legend(loc="upper left")
-    
-    # India subplot
-    axes[1].bar(x - width/2, doh_india, width, label="DoH (HTTP/2)", color="#1f77b4", edgecolor="black", alpha=0.9)
-    axes[1].bar(x + width/2, doh3_india, width, label="DoH/3 (QUIC)", color="#ff7f0e", edgecolor="black", alpha=0.9)
-    axes[1].axhline(0.010, color="red", linestyle="--", linewidth=1.5, label="Chance (1/100 = 1%)")
-    axes[1].set_title("Indian Regional Workload (100 domains)")
-    axes[1].set_xticks(x)
-    axes[1].set_xticklabels(resolvers)
-    axes[1].legend(loc="upper left")
-    
-    fig.suptitle("RQ2: Encrypted DNS Fingerprinting Accuracy (Airtel Broadband, k=10)", weight="bold")
+
+    for idx, wl in enumerate(["global", "india"]):
+        ax = axes[idx]
+        sub = df[df["workload"] == wl]
+        doh_acc, doh_err_lo, doh_err_hi = [], [], []
+        doh3_acc, doh3_err_lo, doh3_err_hi = [], [], []
+
+        for res in [r.lower() for r in resolvers]:
+            r_doh = sub[(sub["resolver"] == res) & (sub["protocol"] == "doh")].iloc[0]
+            r_doh3 = sub[(sub["resolver"] == res) & (sub["protocol"] == "doh3")].iloc[0]
+
+            acc = float(r_doh["accuracy"])
+            doh_acc.append(acc)
+            doh_err_lo.append(acc - float(r_doh["ci_low"]))
+            doh_err_hi.append(float(r_doh["ci_high"]) - acc)
+
+            acc3 = float(r_doh3["accuracy"])
+            doh3_acc.append(acc3)
+            doh3_err_lo.append(acc3 - float(r_doh3["ci_low"]))
+            doh3_err_hi.append(float(r_doh3["ci_high"]) - acc3)
+
+        ax.bar(x - width/2, doh_acc, width, yerr=[doh_err_lo, doh_err_hi], capsize=3,
+               label="DoH (HTTP/2)", color="#1f77b4", edgecolor="black", alpha=0.9)
+        ax.bar(x + width/2, doh3_acc, width, yerr=[doh3_err_lo, doh3_err_hi], capsize=3,
+               label="DoH/3 (QUIC)", color="#ff7f0e", edgecolor="black", alpha=0.9)
+        ax.axhline(0.010, color="red", linestyle="--", linewidth=1.5, label="Chance (1/100 = 1%)")
+        ax.set_title(f"{wl.capitalize()} Workload (100 domains)")
+        ax.set_xticks(x)
+        ax.set_xticklabels(resolvers)
+        if idx == 0:
+            ax.set_ylabel("Fingerprinting Accuracy (Top-1)")
+        ax.set_ylim(0, 0.45)
+        ax.legend(loc="upper left")
+
+    fig.suptitle("RQ2: Encrypted DNS Fingerprinting Accuracy with 95% CI (Airtel Broadband)", weight="bold")
     fig.savefig(OUT_DIR / "fig1_headline_doh_vs_doh3.png", dpi=200)
     plt.close(fig)
     print("Wrote fig1_headline_doh_vs_doh3.png")
 
 
 def plot_cross_network():
-    # Comparing Within-Airtel, Within-Jio, and Cross-Network Transfer
-    slices = ["Google\n(Global)", "AdGuard\n(Global)", "Google\n(India)", "AdGuard\n(India)"]
-    
-    within_airtel = [0.175, 0.262, 0.148, 0.233]
-    within_jio = [0.153, 0.041, 0.133, 0.085]
-    transfer_airtel_to_jio = [0.017, 0.016, 0.019, 0.020]
-    transfer_jio_to_airtel = [0.019, 0.024, 0.018, 0.021]
-    
+    n2_path = ROOT / "results/jio_analysis_20261113/n2_cross_network_transfer.csv"
+    n1_path = ROOT / "results/jio_analysis_20261113/n1_within_jio.csv"
+    fp_path = ROOT / "results/airtel_topup_20261113/rq1_rq2_fingerprinting.csv"
+    if not (n2_path.exists() and n1_path.exists() and fp_path.exists()):
+        print("Warning: result files missing, skipping fig2.")
+        return
+
+    df_n2 = pd.read_csv(n2_path)
+    df_n1 = pd.read_csv(n1_path)
+    df_fp = pd.read_csv(fp_path)
+
+    slices_cfg = [
+        ("global", "google", "Google\n(Global)"),
+        ("global", "adguard", "AdGuard\n(Global)"),
+        ("india", "google", "Google\n(India)"),
+        ("india", "adguard", "AdGuard\n(India)"),
+    ]
+
+    slices = [s[2] for s in slices_cfg]
+    within_airtel, within_jio = [], []
+    transfer_airtel_to_jio, transfer_jio_to_airtel = [], []
+    err_a_j_lo, err_a_j_hi = [], []
+    err_j_a_lo, err_j_a_hi = [], []
+
+    for wl, res, _ in slices_cfg:
+        a_row = df_fp[(df_fp["workload"] == wl) & (df_fp["resolver"] == res) & (df_fp["protocol"] == "doh")].iloc[0]
+        within_airtel.append(float(a_row["accuracy"]))
+
+        j_row = df_n1[(df_n1["workload"] == wl) & (df_n1["resolver"] == res) & (df_n1["protocol"] == "doh")].iloc[0]
+        within_jio.append(float(j_row["accuracy"]))
+
+        aj_row = df_n2[(df_n2["workload"] == wl) & (df_n2["resolver"] == res) & (df_n2["direction"] == "Airtel -> Jio")].iloc[0]
+        acc_aj = float(aj_row["accuracy"])
+        transfer_airtel_to_jio.append(acc_aj)
+        err_a_j_lo.append(acc_aj - float(aj_row["ci_low"]))
+        err_a_j_hi.append(float(aj_row["ci_high"]) - acc_aj)
+
+        ja_row = df_n2[(df_n2["workload"] == wl) & (df_n2["resolver"] == res) & (df_n2["direction"] == "Jio -> Airtel")].iloc[0]
+        acc_ja = float(ja_row["accuracy"])
+        transfer_jio_to_airtel.append(acc_ja)
+        err_j_a_lo.append(acc_ja - float(ja_row["ci_low"]))
+        err_j_a_hi.append(float(ja_row["ci_high"]) - acc_ja)
+
     x = np.arange(len(slices))
     width = 0.20
-    
+
     fig, ax = plt.subplots(figsize=(10, 5), constrained_layout=True)
-    
     ax.bar(x - 1.5*width, within_airtel, width, label="Within-Airtel", color="#2ca02c", edgecolor="black")
     ax.bar(x - 0.5*width, within_jio, width, label="Within-Jio", color="#1f77b4", edgecolor="black")
-    ax.bar(x + 0.5*width, transfer_airtel_to_jio, width, label="Transfer: Airtel -> Jio", color="#d62728", edgecolor="black", hatch="//")
-    ax.bar(x + 1.5*width, transfer_jio_to_airtel, width, label="Transfer: Jio -> Airtel", color="#9467bd", edgecolor="black", hatch="\\\\")
-    
+    ax.bar(x + 0.5*width, transfer_airtel_to_jio, width, yerr=[err_a_j_lo, err_a_j_hi], capsize=3,
+           label="Transfer: Airtel -> Jio", color="#d62728", edgecolor="black", hatch="//")
+    ax.bar(x + 1.5*width, transfer_jio_to_airtel, width, yerr=[err_j_a_lo, err_j_a_hi], capsize=3,
+           label="Transfer: Jio -> Airtel", color="#9467bd", edgecolor="black", hatch="\\\\")
+
     ax.axhline(0.020, color="black", linestyle="--", linewidth=1.5, label="Chance Level (1/50 = 2%)")
-    
     ax.set_ylabel("Accuracy")
     ax.set_title("N2: Cross-Network Transfer Collapse (Airtel vs Reliance Jio)", weight="bold")
     ax.set_xticks(x)
     ax.set_xticklabels(slices)
-    ax.set_ylim(0, 0.35)
+    ax.set_ylim(0, 0.40)
     ax.legend(loc="upper right", framealpha=0.95)
-    
+
     fig.savefig(OUT_DIR / "fig2_cross_network_transfer.png", dpi=200)
     plt.close(fig)
     print("Wrote fig2_cross_network_transfer.png")
 
 
 def plot_carrier_blocking():
-    # Comparing protocol reachability on Airtel vs Jio
+    n6_path = ROOT / "results/jio_analysis_20261113/n6_protocol_availability.csv"
+    if not n6_path.exists():
+        print("Warning: n6_protocol_availability.csv missing, skipping fig3.")
+        return
+    df_n6 = pd.read_csv(n6_path)
+
+    jio_doh_ok = df_n6[df_n6["protocol"] == "doh"]["ok_count"].sum()
+    jio_doh_tot = df_n6[df_n6["protocol"] == "doh"]["total_captures"].sum()
+    jio_doh3_ok = df_n6[df_n6["protocol"] == "doh3"]["ok_count"].sum()
+    jio_doh3_tot = df_n6[df_n6["protocol"] == "doh3"]["total_captures"].sum()
+
+    jio_doh_rate = (jio_doh_ok / jio_doh_tot) * 100 if jio_doh_tot else 0.0
+    jio_doh3_rate = (jio_doh3_ok / jio_doh3_tot) * 100 if jio_doh3_tot else 0.0
+
     categories = ["Airtel DoH\n(TCP 443)", "Airtel DoH/3\n(UDP 443)", "Jio DoH\n(TCP 443)", "Jio DoH/3\n(UDP 443)"]
-    success_rates = [98.5, 96.8, 95.3, 0.0]
+    success_rates = [98.5, 96.8, jio_doh_rate, jio_doh3_rate]
     colors = ["#2ca02c", "#2ca02c", "#1f77b4", "#d62728"]
-    
+
     fig, ax = plt.subplots(figsize=(8, 4.5), constrained_layout=True)
     bars = ax.bar(categories, success_rates, color=colors, edgecolor="black", width=0.55)
-    
+
     for bar in bars:
         h = bar.get_height()
         ax.annotate(f"{h:.1f}%",
                     xy=(bar.get_x() + bar.get_width() / 2, h),
                     xytext=(0, 4), textcoords="offset points",
                     ha="center", va="bottom", weight="bold")
-        
+
     ax.set_ylabel("Query Completion Rate (%)")
-    ax.set_title("N8: Transport Protocol Reachability & Carrier Blocking", weight="bold")
+    ax.set_title("N8: Transport Protocol Reachability (TCP 443 vs UDP 443)", weight="bold")
     ax.set_ylim(0, 115)
-    
-    # Text annotation on the zero bar
-    ax.text(3, 10, "100% BLOCKED\nby Carrier Gateway", ha="center", color="#d62728", weight="bold", fontsize=11)
-    
+
+    # Descriptive observational annotation
+    ax.text(3, 10, "100% Client-Side Timeouts\n(0 Packets Received)", ha="center", color="#d62728", weight="bold", fontsize=10)
+
     fig.savefig(OUT_DIR / "fig3_carrier_quic_blocking.png", dpi=200)
     plt.close(fig)
     print("Wrote fig3_carrier_quic_blocking.png")

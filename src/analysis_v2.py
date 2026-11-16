@@ -400,6 +400,62 @@ def run_e5(df, a, out):
     return res
 
 
+def run_model_comparison(df, a, out):
+    """Evaluate Random Forest vs XGBoost on AdGuard DoH Global."""
+    sub = df[(df.resolver == "adguard") & (df.protocol == "doh")].copy()
+    if "workload" in sub.columns and "global" in sub["workload"].values:
+        sub = sub[sub["workload"] == "global"].copy()
+    
+    repeats = sorted(sub["repeat"].unique())
+    train = sub[sub["repeat"].isin(repeats[:-2])]
+    test = sub[sub["repeat"].isin(repeats[-2:])]
+    shared = sorted(set(train.domain) & set(test.domain))
+    train = train[train.domain.isin(shared)]
+    test = test[test.domain.isin(shared)]
+    
+    X_tr = train[FEATS].to_numpy(float)
+    y_tr = train.domain.to_numpy()
+    X_te = test[FEATS].to_numpy(float)
+    y_te = test.domain.to_numpy()
+    
+    seeds = (17, 42, 101)
+    models_to_test = ["rf"] + (["xgb"] if HAVE_XGB else [])
+    rows = []
+    
+    for m_name in models_to_test:
+        seed_accs = []
+        for s in seeds:
+            le = LabelEncoder().fit(y_tr)
+            if m_name == "rf":
+                m = RandomForestClassifier(n_estimators=100, class_weight="balanced_subsample", random_state=s, n_jobs=a.jobs)
+            else:
+                m = XGBClassifier(n_estimators=200, max_depth=5, learning_rate=0.1, subsample=0.9,
+                                  colsample_bytree=0.9, random_state=s, n_jobs=a.jobs,
+                                  eval_metric="mlogloss", tree_method="hist", verbosity=0)
+            m.fit(X_tr, le.transform(y_tr))
+            preds = le.classes_[m.predict(X_te)]
+            seed_accs.append(accuracy_score(y_te, preds))
+        
+        mean_acc = float(np.mean(seed_accs))
+        lo, hi = wilson(int(round(mean_acc * len(y_te))), len(y_te))
+        rows.append({
+            "task": "Domain Fingerprinting (AdGuard DoH Global)",
+            "model": m_name,
+            "domains": len(shared),
+            "n_train": len(y_tr),
+            "n_test": len(y_te),
+            "accuracy": round(mean_acc, 4),
+            "accuracy_seed_sd": round(float(np.std(seed_accs)), 4),
+            "ci_low": round(lo, 4),
+            "ci_high": round(hi, 4),
+            "chance": round(1.0 / len(shared), 4),
+        })
+    res_df = pd.DataFrame(rows)
+    res_df.to_csv(out / "model_comparison.csv", index=False)
+    print(f"Saved: {out / 'model_comparison.csv'}")
+    return res_df
+
+
 # ----------------------------------------------------------------------------- main
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -439,6 +495,7 @@ def main() -> int:
     print("[E3] feature importance + ablation ..."); e3, top, grp = run_e3(df, a, a.out, e2)
     print("[E4] cross-resolver transfer ..."); e4 = run_e4(df, a, a.out)
     print("[E5] workloads ..."); e5 = run_e5(df, a, a.out)
+    print("[MC] model comparison ..."); mc = run_model_comparison(df, a, a.out)
 
     notes = (
         "## How to read these tables\n"

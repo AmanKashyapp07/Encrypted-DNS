@@ -1,0 +1,9 @@
+pcap_path,reason,detail
+data/raw/network_runs/jio_20261113_134459/pcaps/jio_adguard_doh_global_x.com_2.pcap,slow_query,
+data/raw/network_runs/jio_20261113_134459/pcaps/jio_adguard_doh_india_groww.in_2.pcap,slow_query,
+data/raw/network_runs/jio_20261113_134459/pcaps/jio_adguard_doh_global_mail.ru_3.pcap,slow_query,
+data/raw/network_runs/jio_20261113_134459/pcaps/jio_adguard_doh_global_appsflyersdk.com_4.pcap,slow_query,
+data/raw/network_runs/jio_20261113_134459/pcaps/jio_adguard_doh_india_zomato.com_4.pcap,slow_query,
+data/raw/network_runs/jio_20261113_134459/pcaps/jio_adguard_doh_global_mail.ru_5.pcap,slow_query,
+data/raw/network_runs/jio_20261113_134459/pcaps/jio_adguard_doh_global_cloudflare.net_5.pcap,slow_query,
+data/raw/network_runs/jio_20261113_134459/pcaps/jio_google_doh_india_ibps.in_5.pcap,too_few_packets,

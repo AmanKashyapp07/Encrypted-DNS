@@ -2,7 +2,7 @@
 
 **An end-to-end system that captures live encrypted DNS traffic, extracts transport flow features, and measures how much an on-path observer can infer about user browsing activity. Evaluated across 26,262 raw capture attempts (25,200 unique query keys yielding 20,838 usable feature rows post-filtering) on two production Indian access networks: Airtel Fiber (FTTH) and Reliance Jio Cellular.**
 
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://img.shields.io/badge/tests-10%2F10%20passing-brightgreen.svg)](#6-testing-and-reproducibility)
 [![Paper Draft](https://img.shields.io/badge/Paper-Draft%20Available-green.svg)](docs/paper.md)
@@ -45,14 +45,14 @@ An on-path passive adversary (such as an ISP or local network observer) can trai
 | **AdGuard** | 26.2% | 8.9% | **66% reduction** |
 | **Google** | 17.5% | 16.9% | **~3% reduction (no practical gain)** |
 
-*All results evaluated with leave-repeat-out temporal splits, 200 label-permutation baseline iterations ($p < 0.005$), and 95% Wilson confidence intervals. Full derivations are documented in the [Paper Draft](docs/paper.md).*
+*All results evaluated with leave-repeat-out temporal splits, 200 label-permutation baseline iterations ($p < 0.005$), domain-clustered bootstrap intervals, and 95% Wilson confidence intervals. Full derivations are documented in the [Paper Draft](docs/paper.md).*
 
 ### Critical Systems Findings
 
 1. **Protocol Framing Reduces Leakage on Most Resolvers:** On Cloudflare, Quad9, and AdGuard, HTTP/3 significantly suppresses fingerprintability (leakage reduced by 66% to 86%). QUIC's mandatory Initial packet padding ($\ge 1200$ bytes) and unified frame multiplexing act as natural padding against query-length leakage.
 2. **The Google Anomaly (Implementation Outweighs Protocol):** Google DoH/3 shows almost zero privacy improvement (16.9% vs. 17.5%). Packet inspection revealed that Google returns unpadded response payloads where downstream packet size variations strongly correlate with the number of DNS resource records in the answer section, preserving distinct packet-size signatures.
-3. **Cross-Network Transfer Collapse:** Classifiers trained on fiber broadband (Airtel) completely fail when deployed against cellular traffic (Jio), dropping to **1.6%–2.4%** accuracy (indistinguishable from the 2.0% random chance baseline for the 50 shared domains). Two-sample Kolmogorov-Smirnov tests confirm major distribution shifts ($p < 10^{-6}$) driven by cellular radio scheduling, MTU clamping, and variable link latency.
-4. **Cellular UDP/443 Filtering:** On Reliance Jio cellular, **100% of the 3,000 DoH/3 queries timed out** with 0 packets returned. Observations are consistent with carrier middlebox filtering or blackholing of outbound UDP port 443, which would force standard user agents to fall back to older, higher-leakage protocols.
+3. **Cross-Network Transfer Collapse:** Classifiers trained on fiber broadband (Airtel) completely fail when deployed against cellular traffic (Jio), dropping to **1.6%–2.4%** accuracy (indistinguishable from the 2.0% random chance baseline for the 50 shared domains). Two-sample Kolmogorov-Smirnov tests confirm major distribution shifts ($p < 10^{-6}$) in flow sizes and inter-arrival times across access networks.
+4. **Cellular UDP/443 Inaccessibility:** On Reliance Jio cellular, **100% of the 3,000 DoH/3 queries timed out** with 0 packets returned. Observations are consistent with carrier middlebox filtering or upstream network dropping of outbound UDP port 443; in production environments where UDP 443 is blocked or unroutable, clients fall back to TCP-based transports.
 
 ---
 
@@ -89,7 +89,7 @@ An on-path passive adversary (such as an ISP or local network observer) can trai
 - **Synchronous Capture with Controlled Packet Flush:** To eliminate inter-query packet bleeding, each query is captured into an isolated PCAP. The harness sends a `SIGINT` flush signal to `dumpcap` exactly 150ms after query completion, capturing trailing ACKs/FINs without idling.
 - **Zero Label Leakage Guarantee:** IP addresses, port numbers, SNI hostnames, and transport headers are stripped prior to model ingestion. Classifiers learn exclusively from physical traffic shape dynamics.
 - **Temporal Split Validation:** Evaluation sets are partitioned strictly by query repeat (e.g., training on repeats 8–17, testing on repeats 18–19). Naive random train/test splits artificially leak temporal burst patterns and produce severely inflated accuracy.
-- **Deep Sequence Model Analysis:** Evaluated 1D-CNN and GRU sequence architectures against raw packet size vectors (`pkt_00`–`pkt_19`). Both deep learning models collapsed to near-chance (~1.0%–1.4%), whereas Random Forest achieved 26.2%. Because encrypted DNS flows are ultra-compact (15–40 packets total), flows lack the sequential token depth required by deep recurrent/convolutional layers; cumulative flow volumes and burst aggregates provide the true predictive signal.
+- **Deep Sequence Model Analysis:** Evaluated Random Forest (26.2%), XGBoost (26.5%), 1D-CNN (1.0%), and GRU (1.4%) on AdGuard DoH. While tabular gradient boosting and tree ensembles capture aggregate volume and burst statistics, compact DNS flows (15–40 packets total) lack the sequential token depth needed to train recurrent or convolutional architectures effectively.
 - **Dynamic Interface Binding:** Implemented automated interface resolution via system routing tables, seamlessly switching between physical Wi-Fi (`en0`) and macOS cellular USB tethering (`en5`).
 - **Cryptographic Auditability:** All 39 statistical claims cited in the research paper and technical documentation are mapped directly to execution CSV artifacts in `docs/claims_ledger.csv`.
 
@@ -102,8 +102,8 @@ An on-path passive adversary (such as an ISP or local network observer) can trai
 | **Artificially inflated classifier accuracy** | Random train/test splits leak temporal session correlation across queries. | Implemented strict leave-repeat-out temporal cross-validation. |
 | **Model shortcut learning** | Residual protocol/address metadata (IPs, ports, headers) allows trivial classification. | Enforced zero-label-leakage filter; validated statistical significance against 200 label-permutation baseline tests ($p < 0.005$). |
 | **Google DoH/3 persistent leakage** | Unpadded server responses scale directly with DNS answer record count. | Extracted packet-level breakdown; identified implementation variance rather than protocol failure. |
-| **Cross-network transfer collapse** | Cellular radio resource scheduling and MTU clamping alter IATs and packet sizes. | Quantified distribution shifts via Kolmogorov-Smirnov tests ($p < 10^{-6}$); trained pooled multi-network models to recover generalized representations (16.0%–20.7%). |
-| **100% DoH/3 failure on mobile network** | Carrier core middleboxes drop outbound UDP 443 packets. | Hardened capture engine with a 2-second timeout and `udp_blocked_flag` tagging, documenting the silent fallback vulnerability. |
+| **Cross-network transfer collapse** | Access network differences in latency and packet framing alter IATs and packet sizes. | Quantified distribution shifts via Kolmogorov-Smirnov tests ($p < 10^{-6}$); trained pooled multi-network models to recover generalized representations (15.4%–19.2%). |
+| **100% DoH/3 failure on mobile network** | Outbound UDP 443 queries consistently timed out with 0 packets returned on mobile network. | Hardened capture engine with a 2-second timeout and `udp_blocked_flag` tagging, documenting client-side timeouts. |
 
 ---
 
@@ -121,13 +121,13 @@ Preprocessed feature datasets are version-controlled under `data/processed/`, al
 ## 7. Quick Start Guide
 
 ### Prerequisites
-- Python 3.9+
+- Python 3.10+
 - Packet capture utilities: `dumpcap` and `tshark` (via `brew install wireshark` or `sudo apt install tshark`)
 - DNS measurement client: [`q` DNS client v0.19.12+](https://github.com/natesales/q/releases)
 
 ### Setup
 ```bash
-git checkout aman
+git checkout main
 python3 -m venv .venv
 source .venv/bin/activate          # On Windows: .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
@@ -194,7 +194,7 @@ All results are written deterministically to `results/airtel_all_20261113/`, `re
 
 - **Evaluated Scope:** Closed-world evaluation across 100 domains from two access networks. While open-world evaluation was conducted (monitored vs. unmonitored), generalizability to additional worldwide ISPs remains uncharacterized.
 - **Client & Resolver Matrix:** Measurements reflect specific versions of `q` (0.19.12) and public resolver configurations at the time of collection.
-- **Cellular DoH/3 Inaccessibility:** Because Reliance Jio dropped 100% of outbound UDP 443 packets, classifier accuracy could not be evaluated for DoH/3 on the cellular path.
+- **Cellular DoH/3 Inaccessibility:** Because Reliance Jio yielded 100% client-side timeouts (0 packets returned) on outbound UDP 443, classifier accuracy could not be evaluated for DoH/3 on this cellular vantage point.
 - **Future Directions:** Expanding collection to multiple vantage points across the Global South, testing browser-driven full page loads, evaluating padding defenses on live traffic, and packaging the measurement harness as a standalone CLI tool.
 
 ---

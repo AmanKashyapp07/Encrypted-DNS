@@ -4,8 +4,8 @@ protocols: [doh, doh3]
 resolvers: [adguard, cloudflare, google, quad9, nextdns]
 networks:
   airtel: complete
-  jio: pending
-  campus: pending
+  jio: complete
+  campus: cancelled_out_of_scope
 workload_domains:
   global: 100
   india: 100

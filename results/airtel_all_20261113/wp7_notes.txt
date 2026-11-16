@@ -1,0 +1,2 @@
+WP7: Packet-size and post-handshake n-grams computed from signed packet-size sequences (pkt_00..pkt_19).
+Burst n-grams are NOT reported because the processed feature table stores burst aggregates rather than the original burst sequences. Extracting burst n-grams would require re-processing raw PCAPs.

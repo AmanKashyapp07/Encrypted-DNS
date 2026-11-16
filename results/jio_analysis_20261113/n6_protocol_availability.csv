@@ -1,0 +1,7 @@
+network,resolver,protocol,total_captures,ok_count,failed_count,udp_blocked,success_rate
+jio,adguard,doh,1000,905,95,0,0.905
+jio,adguard,doh3,1000,0,1000,1000,0.0
+jio,cloudflare,doh,1000,15,985,0,0.015
+jio,cloudflare,doh3,1000,0,1000,1000,0.0
+jio,google,doh,1000,1000,0,0,1.0
+jio,google,doh3,1000,0,1000,1000,0.0

@@ -1,0 +1,5 @@
+workload,resolver,protocol,domains,n_train,n_test,accuracy,accuracy_sd,ci_low,ci_high,ci_boot_low,ci_boot_high,chance,p_value
+global,adguard,doh,50,394,98,0.0408,0.0083,0.016,0.1003,0.0,0.0707,0.02,0.1642
+global,google,doh,50,400,100,0.1567,0.0125,0.101,0.2442,0.08,0.2052,0.02,0.005
+india,adguard,doh,34,264,67,0.0846,0.0141,0.0417,0.1819,0.015,0.1364,0.0294,0.0249
+india,google,doh,50,399,100,0.1233,0.0125,0.07,0.1981,0.04,0.19,0.02,0.005

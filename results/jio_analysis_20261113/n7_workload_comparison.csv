@@ -1,0 +1,3 @@
+resolver,global_accuracy,india_accuracy,difference (india - global)
+adguard,0.0408,0.0846,0.0438
+google,0.1567,0.1233,-0.0334

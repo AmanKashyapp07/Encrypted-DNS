@@ -5,7 +5,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score
-from .stats import empirical_p_value, wilson_interval
+from .stats import empirical_p_value, wilson_interval, domain_clustered_bootstrap
 
 FEATURE_GROUPS = {"volume": ["n_pkts", "n_up", "n_down", "bytes_up", "bytes_down", "bytes_total", "ratio_bytes_down_up"], "size_stats": ["up_mean", "up_std", "up_max", "down_mean", "down_std", "down_max"], "timing": ["duration", "iat_mean", "iat_std", "iat_median", "iat_max", "t_first_down"], "bursts": ["n_bursts", "burst_len_mean", "burst_len_max", "burst_bytes_mean", "burst_bytes_max"], "handshake": [f"pkt_{index:02d}" for index in range(20)]}
 
@@ -33,35 +33,69 @@ def select_headline_repeats(
         return selected.iloc[0:0].reset_index(drop=True), dropped
     return pd.concat(sampled, ignore_index=True), dropped
 
-def _evaluate(frame: pd.DataFrame, features: list[str], seed: int, estimators: int, permute: bool = False) -> dict[str, float] | None:
+def _evaluate(
+    frame: pd.DataFrame,
+    features: list[str],
+    seed: int,
+    estimators: int,
+    permute: bool = False,
+    split_strategy: str = "kfold",
+) -> dict[str, float] | None:
     clean = frame.dropna(subset=features + ["domain", "repeat"]).copy()
     if clean.domain.nunique() < 2 or clean.repeat.nunique() < 2:
         return None
     actual, predicted, top_five = [], [], 0
     rng = np.random.default_rng(seed)
     repeats = sorted(clean.repeat.unique())
-    folds = [repeats[index:index + 2] for index in range(0, len(repeats), 2)]
-    for held_out in folds:
-        train, test = clean[~clean.repeat.isin(held_out)], clean[clean.repeat.isin(held_out)]
+
+    if split_strategy == "temporal_holdout":
+        train = clean[clean.repeat.isin(repeats[:-2])]
+        test = clean[clean.repeat.isin(repeats[-2:])]
+        folds = [(repeats[-2:], train, test)]
+    else:
+        folds = [
+            (repeats[idx:idx + 2], clean[~clean.repeat.isin(repeats[idx:idx + 2])], clean[clean.repeat.isin(repeats[idx:idx + 2])])
+            for idx in range(0, len(repeats), 2)
+        ]
+
+    for held_out_reps, train, test in folds:
         labels = train.domain.to_numpy()
-        if permute:
-            labels = rng.permutation(labels)
         known = test.domain.isin(set(labels))
         if not known.any():
             continue
-        model = RandomForestClassifier(n_estimators=estimators, class_weight="balanced_subsample", n_jobs=1, random_state=seed + int(held_out[0]))
+        model = RandomForestClassifier(
+            n_estimators=estimators,
+            class_weight="balanced_subsample",
+            n_jobs=1,
+            random_state=seed + int(held_out_reps[0]),
+        )
         model.fit(train[features].to_numpy(float), labels)
-        test_x, test_y = test.loc[known, features].to_numpy(float), test.loc[known, "domain"].to_numpy()
+        test_x = test.loc[known, features].to_numpy(float)
+        test_y = test.loc[known, "domain"].to_numpy()
         probabilities = model.predict_proba(test_x)
         predictions = model.classes_[probabilities.argmax(axis=1)]
         positions = np.argsort(probabilities, axis=1)[:, -min(5, len(model.classes_)):]
-        top_five += sum(test_y[index] in model.classes_[positions[index]] for index in range(len(test_y)))
-        actual.extend(test_y); predicted.extend(predictions)
+        
+        eval_y = rng.permutation(test_y) if permute else test_y
+        top_five += sum(eval_y[idx] in model.classes_[positions[idx]] for idx in range(len(eval_y)))
+        actual.extend(eval_y)
+        predicted.extend(predictions)
+
     if not actual:
         return None
     accuracy = accuracy_score(actual, predicted)
     lower, upper = wilson_interval(sum(a == b for a, b in zip(actual, predicted)), len(actual))
-    return {"accuracy": accuracy, "ci_low": lower, "ci_high": upper, "top5": top_five / len(actual), "macro_f1": f1_score(actual, predicted, average="macro"), "n_test": len(actual)}
+    boot_low, boot_high = domain_clustered_bootstrap(actual, predicted, actual, n_bootstraps=500, seed=seed)
+    return {
+        "accuracy": accuracy,
+        "ci_low": lower,
+        "ci_high": upper,
+        "ci_boot_low": boot_low,
+        "ci_boot_high": boot_high,
+        "top5": top_five / len(actual),
+        "macro_f1": f1_score(actual, predicted, average="macro"),
+        "n_test": len(actual),
+    }
 
 def evaluate(
     frame: pd.DataFrame,
@@ -73,6 +107,7 @@ def evaluate(
     repeat_end: int = 19,
     target_k: int = 10,
     workers: int = 1,
+    split_strategy: str = "kfold",
 ) -> dict[str, float] | None:
     features = features or available_features(frame)
     frame = frame.copy()
@@ -82,28 +117,40 @@ def evaluate(
     if frame.empty:
         return None
     observed = Parallel(n_jobs=workers, backend="loky")(
-        delayed(_evaluate)(frame, features, seed, 100) for seed in seeds
+        delayed(_evaluate)(frame, features, seed, estimators, False, split_strategy) for seed in seeds
     )
     observed = [result for result in observed if result is not None]
     if not observed:
         return None
     mean_accuracy = float(np.mean([result["accuracy"] for result in observed]))
-    # The null uses one designated seed and is shared across all reported seeds.
     null_results = Parallel(n_jobs=workers, backend="loky")(
-        delayed(_evaluate)(frame, features, seeds[0] + 10000 + index, 50, True)
+        delayed(_evaluate)(frame, features, seeds[0] + 10000 + index, estimators, True, split_strategy)
         for index in range(permutations)
     )
     null = [result["accuracy"] for result in null_results if result is not None]
-    reference = observed[0]
+    
+    mean_ci_low = float(np.mean([result["ci_low"] for result in observed]))
+    mean_ci_high = float(np.mean([result["ci_high"] for result in observed]))
+    mean_boot_low = float(np.mean([result["ci_boot_low"] for result in observed]))
+    mean_boot_high = float(np.mean([result["ci_boot_high"] for result in observed]))
+    
     return {
-        "n": int(len(frame)), "domains": int(frame.domain.nunique()),
-        "repeats_per_domain": repeats_per_domain, "accuracy": mean_accuracy,
+        "n": int(len(frame)),
+        "domains": int(frame.domain.nunique()),
+        "repeats_per_domain": repeats_per_domain,
+        "accuracy": mean_accuracy,
         "accuracy_seed_sd": float(np.std([result["accuracy"] for result in observed])),
-        "ci_low": float(reference["ci_low"]), "ci_high": float(reference["ci_high"]),
+        "ci_low": mean_ci_low,
+        "ci_high": mean_ci_high,
+        "ci_boot_low": mean_boot_low,
+        "ci_boot_high": mean_boot_high,
         "top5": float(np.mean([result["top5"] for result in observed])),
         "macro_f1": float(np.mean([result["macro_f1"] for result in observed])),
-        "chance": 1 / frame.domain.nunique(), "p_value": empirical_p_value(mean_accuracy, null),
-        "n_permutations": len(null), "dropped_domains": "; ".join(
+        "chance": 1 / frame.domain.nunique(),
+        "p_value": empirical_p_value(mean_accuracy, null),
+        "n_permutations": len(null),
+        "split_strategy": split_strategy,
+        "dropped_domains": "; ".join(
             f"{domain} ({reason})" for domain, reason in sorted(dropped.items())
         ),
     }

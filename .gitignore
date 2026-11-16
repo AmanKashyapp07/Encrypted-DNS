@@ -38,8 +38,7 @@ notebooks/
 Project_topic.png
 
 # Experimental datasets and raw packet captures
-# (Excluded to protect local data, comply with privacy safeguards, and maintain a lightweight repository)
-# Data: ignore everything by default, then whitelist small, shareable files
+# (Raw PCAPs are excluded to protect local network telemetry and maintain lightweight repository)
 data/*
 !data/readme.md
 !data/workloads/
@@ -49,8 +48,21 @@ data/raw/*
 !data/processed/
 data/processed/*
 !data/processed/dataset.csv
+!data/processed/dataset_pilot_v1.csv
+!data/processed/dataset_v2.csv
+!data/processed/dataset_jio.csv
+!data/processed/dataset_combined.csv
+!data/processed/drop_reasons_v2.csv
+!data/processed/drop_reasons_jio.csv
+!data/processed/manifest_t0_consolidated.csv
+
+# Analysis results (Track result CSVs, markdown reports, and publication figures)
 results/*
 !results/figures/
+!results/airtel_topup_20261113/
+!results/jio_analysis_20261113/
+!results/airtel_all_20261113/
+!results/airtel_advanced_20261113/
 *.pcap
 *.pcapng
 airtel_t0_raw_*/
