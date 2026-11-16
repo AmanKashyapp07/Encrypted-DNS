@@ -9,10 +9,9 @@ This document specifies the exact machine learning protocols, temporal data spli
 To evaluate fingerprintability rigorously without leaking temporal artifacts:
 
 * **The Fallacy of Random Splits:** Encrypted DNS traffic exhibits high temporal autocorrelation: queries executed within seconds of each other share transient network queuing delays and dynamic CDN edge conditions. Standard randomized train/test splits (e.g., k-fold CV) leak these transient artifacts, yielding severely inflated accuracy.
-* **Leave-Repeat-Out Protocol:** Data is partitioned strictly by query repeat index:
-  * **Headline Airtel Evaluation:** Queries from repeats 8–17 (10 repeats per domain) form the training set; queries from held-out repeats 18–19 form the evaluation test set.
-  * **Jio Cellular Evaluation:** Queries from repeats 0–7 form the training set; queries from held-out repeats 8–9 form the test set.
-  * **Balanced Repeats ($k=10$):** In the headline Airtel evaluation, only domains meeting the complete target of 10 successful repeats across the evaluated range are included, ensuring balanced multi-class evaluation.
+* **Leave-Repeat-Out & Repeat-Range Protocols:**
+  * **Headline Airtel Evaluation (Fixed Temporal Holdout with Balanced Repeats):** Queries from repeats 8–17 form the training set; queries from held-out repeats 18–19 form the evaluation test set. Only domains meeting the complete balanced target of 10 successful repeats across repeats 8–19 are retained ($k=10$).
+  * **Jio Cellular Evaluation (Repeat-Range Temporal Partition):** Due to real-world cellular transmission timeouts and middlebox dropouts, mobile measurements do not achieve uniform 100% query capture across all repeats. The Jio evaluation strictly partitions queries by repeat range: queries captured within repeat indices 0–7 form the training set, and queries captured within repeat indices 8–9 form the test set. Domains are retained if they are represented in both partitions (at least one training observation in repeats 0–7 and at least one held-out test observation in repeats 8–9), ensuring valid multi-class evaluation without artificially pruning domains subject to real-world wireless variance. Domains missing entirely from either partition (such as 8 Indian domains on AdGuard lacking captures in repeats 8–9) are explicitly logged as dropped.
 
 ---
 
@@ -61,7 +60,7 @@ We formally distinguish two candidate null hypotheses:
    * *P-value Calculation:*
      $$p = \frac{1 + \sum_{j=1}^{200} \mathbb{I}(\bar{\text{Acc}}_{\text{null}, j} \ge \bar{\text{Acc}}_{\text{observed}})}{201}$$
    * *Significance & FDR:* All 16 reported headline results satisfy raw $p = 0.004975$ ($p < 0.005$). Multiple-comparison Benjamini–Hochberg False Discovery Rate (FDR) adjustment confirms that all slices remain statistically significant at $p_{\text{FDR}} < 0.005$ ($\alpha = 0.05$).
-2. **Full Pipeline Retraining Null ($H_0^{\text{full}}$):** Network traffic features carry zero mutual information with domain identities across the end-to-end learning pipeline (training labels permuted, model refit). Because empirical accuracies (5.2%–45.2%) exceed the 1.0% chance baseline by more than $5\sigma$, both $H_0^{\text{cond}}$ and $H_0^{\text{full}}$ reject conclusively. The conditional test $H_0^{\text{cond}}$ is adopted as the primary reporting standard because it directly validates inference-time domain distinguishability on the held-out temporal evaluation partition.
+2. **Distinction from Full Pipeline Retraining Null ($H_0^{\text{full}}$):** A distinct null hypothesis in supervised learning posits that traffic features carry zero mutual information with domain identities across the end-to-end learning pipeline, which requires repeatedly refitting the classifier on permuted training labels across all Monte Carlo iterations. **We explicitly note that $H_0^{\text{full}}$ was not evaluated in our experiments** due to the computational cost of thousands of full model retrainings across seeds and slices. Instead, our testing is strictly conditional on the fitted model representations ($H_0^{\text{cond}}$), evaluating whether the trained classifier's held-out predictions align with test domain clusters beyond chance under exchangeability. Users and reviewers should interpret reported permutation $p$-values specifically as conditional tests of inference-time domain distinguishability on the held-out temporal partition, rather than as a refitted full-pipeline permutation test.
 
 ---
 

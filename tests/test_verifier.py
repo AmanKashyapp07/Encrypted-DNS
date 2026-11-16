@@ -1,4 +1,4 @@
-"""Unit tests for research result verifier, including positive and negative cases."""
+"""Unit tests for research result verifier, including comprehensive positive and negative failure-mode tests."""
 
 import unittest
 from pathlib import Path
@@ -65,6 +65,20 @@ class TestResearchVerifier(unittest.TestCase):
         with patch("scripts.verify_research_results.pd.read_csv", side_effect=mock_read_csv):
             self.assertFalse(verify_claims_ledger())
 
+    def test_negative_malformed_commit_sha_rejected(self):
+        """Verifier must catch and reject non-40-hex commit hashes (e.g. malformed or short)."""
+        real_df = _ORIG_READ_CSV(ROOT / "docs/claims_ledger.csv")
+        corrupted = real_df.copy()
+        corrupted.loc[0, "commit"] = "not_a_valid_git_sha"
+
+        def mock_read_csv(path, *args, **kwargs):
+            if "claims_ledger.csv" in str(path):
+                return corrupted.copy()
+            return _ORIG_READ_CSV(path, *args, **kwargs)
+
+        with patch("scripts.verify_research_results.pd.read_csv", side_effect=mock_read_csv):
+            self.assertFalse(verify_claims_ledger())
+
     def test_negative_missing_column_rejected(self):
         """Verifier must fail if required schema columns are missing."""
         real_df = _ORIG_READ_CSV(ROOT / "docs/claims_ledger.csv")
@@ -92,6 +106,33 @@ class TestResearchVerifier(unittest.TestCase):
 
         with patch("scripts.verify_research_results.pd.read_csv", side_effect=mock_read_csv):
             self.assertFalse(verify_claims_ledger())
+
+    def test_negative_corrupted_ci_bounds_rejected(self):
+        """Verifier must reject confidence intervals in claims ledger that diverge from source CSV."""
+        real_df = _ORIG_READ_CSV(ROOT / "docs/claims_ledger.csv")
+        corrupted = real_df.copy()
+        corrupted.loc[0, "confidence_interval"] = "[0.8000, 0.9500]"  # Corrupted CI bounds
+
+        def mock_read_csv(path, *args, **kwargs):
+            if "claims_ledger.csv" in str(path):
+                return corrupted.copy()
+            return _ORIG_READ_CSV(path, *args, **kwargs)
+
+        with patch("scripts.verify_research_results.pd.read_csv", side_effect=mock_read_csv):
+            self.assertFalse(verify_claims_ledger())
+
+    def test_negative_duplicate_model_rows_rejected(self):
+        """Verifier must reject model comparison file if duplicate rows for a model exist."""
+        real_mc = _ORIG_READ_CSV(ROOT / "results/airtel_advanced_20261113/model_comparison.csv")
+        corrupted_mc = pd.concat([real_mc, real_mc.iloc[[0]]], ignore_index=True)  # Duplicate first row
+
+        def mock_read_csv(path, *args, **kwargs):
+            if "model_comparison.csv" in str(path):
+                return corrupted_mc.copy()
+            return _ORIG_READ_CSV(path, *args, **kwargs)
+
+        with patch("scripts.verify_research_results.pd.read_csv", side_effect=mock_read_csv):
+            self.assertFalse(verify_model_comparisons())
 
 
 if __name__ == "__main__":

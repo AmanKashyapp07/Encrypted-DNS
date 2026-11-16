@@ -12,7 +12,7 @@ Encrypted DNS protocols — DNS-over-HTTPS (DoH, RFC 8484) and its successor ove
 
 Using a Random Forest classifier with leave-repeat-out evaluation and 200-permutation significance tests, we find that all 16 resolver–protocol–workload slices on Airtel are significantly above chance ($p < 0.005$). DoH (HTTP/2) accuracy spans 0.148–0.342; DoH/3 (QUIC) accuracy spans 0.046–0.169. For three of four resolvers, switching to QUIC substantially reduces fingerprintability (up to 86% leakage reduction on Quad9), but Google DoH/3 is a notable exception (0.169 vs. 0.175), where unpadded response variations preserve fingerprintability. Aggregate flow features dramatically outperform raw packet-sequence models (1D-CNN and GRU, which collapse to near-chance ~1.0%–1.4%). 
 
-Critically, models trained on broadband traffic fail completely when evaluated on cellular traffic, dropping to 0.016–0.024 (indistinguishable from the 0.020 chance baseline for 50 shared domains), reflecting pronounced distribution shifts in packet sizes and inter-arrival timing between fixed broadband and mobile networks. Pooled multi-network co-training recovers accuracy to 0.154–0.192 on the combined composite test set (up to 0.193–0.337 on held-out broadband traces). Furthermore, on Reliance Jio cellular, 100% of the 3,000 DoH/3 queries timed out with zero return packets received on UDP port 443, documenting real-world transport reachability barriers that could silently force user agents into higher-leakage fallback protocols.
+Critically, models trained on broadband traffic do not generalize when evaluated on cellular traffic, yielding accuracies of 0.017–0.024 (indistinguishable from the 0.020 chance baseline for 50 shared domains, $p > 0.05$), reflecting pronounced distribution shifts in packet sizes and inter-arrival timing between fixed broadband and mobile networks. Pooled multi-network co-training recovers accuracy to 0.154–0.192 on the combined composite test set (up to 0.193–0.337 on held-out broadband traces). Furthermore, on Reliance Jio cellular, 100% of the 3,000 DoH/3 queries timed out with zero return packets received on UDP port 443, documenting real-world transport reachability barriers that would impede DoH/3 deployment without dual-stack fallback mechanisms (which were not experimentally evaluated).
 
 ---
 
@@ -173,7 +173,7 @@ We additionally evaluate:
 
 **Cluster-robust bootstrap 95% confidence intervals.** Rather than unclustered Wilson intervals that assume i.i.d. observations, we compute domain-clustered block bootstrap 95% confidence intervals ($B = 1,000$ resamples) directly over the multi-seed mean estimator, accounting for intra-domain observation correlation and seed variance.
 
-**Domain-clustered permutation testing & FDR control.** To prevent intra-domain observation leakage under permutation, exchangeability is enforced at the domain cluster level. We test the conditional label alignment null hypothesis ($H_0^{\text{cond}}$): given the learned feature representations, test instances whose labels are permuted at the domain level achieve accuracy equal to or exceeding observed accuracy. Evaluated across 200 domain-clustered permutations on the exact same model seeds, all 16 headline slices decisively reject the null ($p < 0.005$). Furthermore, Benjamini–Hochberg False Discovery Rate (FDR) adjustment across all slices confirms that every slice remains statistically significant at $p_{\text{FDR}} < 0.005$ ($\alpha = 0.05$). Under the alternative full-pipeline retraining null hypothesis ($H_0^{\text{full}}$), feature representations carry zero domain information; because empirical accuracies (5.2%–45.2%) exceed the 1.0% chance baseline by $> 5\sigma$, both formulations reject the null conclusively.
+**Domain-clustered permutation testing & FDR control.** To prevent intra-domain observation leakage under permutation, exchangeability is enforced at the domain cluster level. We test the conditional label alignment null hypothesis ($H_0^{\text{cond}}$): given the learned feature representations, test instances whose labels are permuted at the domain cluster level achieve accuracy equal to or exceeding observed accuracy. Evaluated across 200 domain-clustered permutations on the exact same model seeds, all 16 headline slices decisively reject the conditional null ($p < 0.005$). Furthermore, Benjamini–Hochberg False Discovery Rate (FDR) adjustment across all slices confirms that every slice remains statistically significant at $p_{\text{FDR}} < 0.005$ ($\alpha = 0.05$). We explicitly note that our procedure tests conditional inference-time alignment ($H_0^{\text{cond}}$) given the trained model; it does not perform full-pipeline retraining with permuted training labels ($H_0^{\text{full}}$), which was not evaluated due to computational constraints.
 
 **Chance baseline.** For N = 100 domains, the chance accuracy is 1/100 = 0.010.
 
@@ -233,7 +233,7 @@ Table 1 presents the headline fingerprinting accuracy for all 16 resolver–prot
 
 ### 5.2 Jio Cellular Results (N1 & N8)
 
-We conducted a complete 6,000-query capture matrix on a mobile cellular connection via Reliance Jio across 100 domains (50 Global + 50 India), 3 public resolvers (Google, AdGuard, Cloudflare), and 2 protocols (DoH and DoH/3) with 10 shuffled repeats.
+We conducted a 6,000-query capture matrix on a mobile cellular connection via Reliance Jio across 100 domains (50 Global + 50 India), 3 public resolvers (Google, AdGuard, Cloudflare), and 2 protocols (DoH and DoH/3) across 10 capture cycles. Because cellular connections exhibit wireless packet dropouts and latency timeouts, we evaluate within-Jio fingerprinting using a repeat-range temporal partition: queries captured in repeat indices 0–7 form the training set, and queries captured in held-out repeat indices 8–9 form the test set, retaining all domains represented in both partitions (logging any dropped domains).
 
 **Table 2: Within-Jio fingerprinting performance (repeats 0–7 train, 8–9 test, 3-seed RF, 200 domain-clustered label permutations).**
 
@@ -250,7 +250,7 @@ We conducted a complete 6,000-query capture matrix on a mobile cellular connecti
 **Key Findings on Jio:**
 
 1. **Cellular Fingerprintability:** Google DoH achieves **0.157** accuracy on Global domains and **0.123** on Indian domains (both p = 0.005, significantly exceeding the 0.020 chance baseline by ~6–8×). AdGuard DoH achieves 0.068 on Indian domains (p = 0.025, exceeding the 0.024 baseline). On Global domains, AdGuard achieves 0.041, which is statistically indistinguishable from the chance baseline ($p = 0.124$).
-2. **Cellular UDP 443 Inaccessibility (N8):** Across all 3,000 DoH/3 capture attempts on Jio, **100% of QUIC (UDP port 443) traffic timed out with zero return packets received** (`udp_blocked_flag=true`). While consistent with carrier-grade middlebox filtering of outbound QUIC, local NAT mapping timeouts or interface-specific tethering policies cannot be ruled out. If deployed on networks exhibiting UDP 443 blockage, user agents fall back to TCP-based transports, forfeiting QUIC's privacy protections.
+2. **Cellular UDP 443 Inaccessibility (N8):** Across all 3,000 DoH/3 capture attempts on Jio, **100% of QUIC (UDP port 443) traffic timed out with zero return packets received** (`udp_blocked_flag=true`). While consistent with carrier-grade middlebox filtering of outbound QUIC, local NAT mapping timeouts or interface-specific tethering policies cannot be ruled out. If deployed on networks exhibiting UDP 443 blockage, user agents relying on standard happy eyeballs or transport fallback would revert to TCP-based transports; however, browser or OS fallback dynamics were not experimentally measured in our setup.
 3. **Resolver Edge Routing Disparities:** Google DoH achieved a 100% completion rate (1,000/1,000 ok), and AdGuard achieved 90.5% (905/1,000 ok). In contrast, Cloudflare DoH on Jio mobile cellular experienced severe routing drops to Cloudflare anycast POPs (only 15/1,000 completed), illustrating that DNS privacy protocols depend heavily on carrier routing stability.
 
 ### 5.3 Cross-Network Analysis (N2–N4)
@@ -476,7 +476,7 @@ We identify the following limitations of this study:
 
 **Seed sensitivity.** We report mean accuracy over three random seeds (17, 42, 101) for the RF classifier. Individual seed results vary by less than 0.01 in most slices.
 
-**Statistical reporting.** All reported accuracies are accompanied by Wilson 95% confidence intervals and empirical p-values from 200-permutation tests.
+**Statistical reporting.** All reported accuracies are accompanied by domain-clustered block bootstrap 95% confidence intervals ($B = 1,000$ iterations) and empirical p-values from 200 domain-clustered permutation tests with False Discovery Rate (FDR) control.
 
 ---
 

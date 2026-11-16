@@ -193,18 +193,18 @@ def plot_carrier_blocking():
 
     # Dynamically compute Airtel completion rates from manifest
     manifest_path = ROOT / "data/processed/manifest_t0_consolidated.csv"
-    if manifest_path.exists():
-        df_m = pd.read_csv(manifest_path)
-        sub_m = df_m[df_m["repeat"].between(8, 19)]
-        a_doh_ok = ((sub_m["protocol"] == "doh") & (sub_m["status"] == "ok")).sum()
-        a_doh_tot = (sub_m["protocol"] == "doh").sum()
-        airtel_doh_rate = (a_doh_ok / a_doh_tot) * 100 if a_doh_tot else 0.0
+    if not manifest_path.exists():
+        raise FileNotFoundError(f"Required manifest file missing for dynamic Airtel reachability computation: {manifest_path}")
 
-        a_doh3_ok = ((sub_m["protocol"] == "doh3") & (sub_m["status"] == "ok")).sum()
-        a_doh3_tot = (sub_m["protocol"] == "doh3").sum()
-        airtel_doh3_rate = (a_doh3_ok / a_doh3_tot) * 100 if a_doh3_tot else 0.0
-    else:
-        airtel_doh_rate, airtel_doh3_rate = 95.4, 93.5
+    df_m = pd.read_csv(manifest_path)
+    sub_m = df_m[df_m["repeat"].between(8, 19)]
+    a_doh_ok = ((sub_m["protocol"] == "doh") & (sub_m["status"] == "ok")).sum()
+    a_doh_tot = (sub_m["protocol"] == "doh").sum()
+    airtel_doh_rate = (a_doh_ok / a_doh_tot) * 100 if a_doh_tot else 0.0
+
+    a_doh3_ok = ((sub_m["protocol"] == "doh3") & (sub_m["status"] == "ok")).sum()
+    a_doh3_tot = (sub_m["protocol"] == "doh3").sum()
+    airtel_doh3_rate = (a_doh3_ok / a_doh3_tot) * 100 if a_doh3_tot else 0.0
 
     categories = ["Airtel DoH\n(TCP 443)", "Airtel DoH/3\n(UDP 443)", "Jio DoH\n(TCP 443)", "Jio DoH/3\n(UDP 443)"]
     success_rates = [airtel_doh_rate, airtel_doh3_rate, jio_doh_rate, jio_doh3_rate]

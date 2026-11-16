@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """
-verify_research_results.py — Automated research verification suite.
+verify_research_results.py — Automated numerical consistency and provenance checker.
 
 Verifies:
   1. Dataset row counts and network partitions.
   2. Exactly 44 features matching extract_features.py and FEATURE_GROUPS.
   3. Proper chance baselines (1.0% for 100 domains, 2.0% for 50 domains).
-  4. Consistency of every numerical claim in docs/claims_ledger.csv against underlying result CSVs.
-  5. Jio DoH/3 carrier blocking audit (100% timeouts on UDP 443).
+  4. Consistency of numerical claims in docs/claims_ledger.csv against underlying result CSVs.
+  5. Jio DoH/3 client-side reachability audit (100% timeouts on UDP 443).
   6. Model comparison values on AdGuard DoH Global.
 
-Exits with code 0 on success; code 1 if any check fails.
+Note: This tool verifies data provenance, numerical reproducibility, and schema integrity
+against generated experimental outputs; it does not replace scientific peer review.
 """
 
 from __future__ import annotations
@@ -145,11 +146,20 @@ def verify_model_comparisons() -> bool:
     df_mc = pd.read_csv(mc_path)
     df_seq = pd.read_csv(seq_path)
 
-    rf_acc = df_mc[df_mc["model"] == "rf"]["accuracy"].values[0]
-    xgb_acc = df_mc[df_mc["model"] == "xgb"]["accuracy"].values[0]
+    rf_rows = df_mc[df_mc["model"] == "rf"]
+    xgb_rows = df_mc[df_mc["model"] == "xgb"]
+    if len(rf_rows) != 1 or len(xgb_rows) != 1:
+        print(f"  FAIL: Expected exactly 1 RF and 1 XGB row in model_comparison.csv; found {len(rf_rows)} and {len(xgb_rows)}")
+        return False
+
+    rf_acc = rf_rows["accuracy"].values[0]
+    xgb_acc = xgb_rows["accuracy"].values[0]
 
     adguard_cnn = df_seq[(df_seq["resolver"] == "adguard") & (df_seq["protocol"] == "doh") & (df_seq["workload"] == "global") & (df_seq["model"] == "cnn")]
     adguard_gru = df_seq[(df_seq["resolver"] == "adguard") & (df_seq["protocol"] == "doh") & (df_seq["workload"] == "global") & (df_seq["model"] == "gru")]
+    if len(adguard_cnn) != 1 or len(adguard_gru) != 1:
+        print(f"  FAIL: Expected exactly 1 CNN and 1 GRU row in wp8_sequence_models.csv; found {len(adguard_cnn)} and {len(adguard_gru)}")
+        return False
 
     cnn_acc = adguard_cnn["accuracy"].values[0]
     gru_acc = adguard_gru["accuracy"].values[0]
@@ -297,7 +307,7 @@ def verify_claims_ledger() -> bool:
 
 def main() -> int:
     print("=" * 70)
-    print("Encrypted DNS Research Verification Suite")
+    print("Encrypted DNS Artifact Provenance & Numerical Verification Suite")
     print("=" * 70)
 
     checks = [
@@ -316,7 +326,7 @@ def main() -> int:
         print()
 
     print("=" * 70)
-    print("ALL 6 RESEARCH VERIFICATION CHECKS PASSED (100% REPRODUCIBLE)")
+    print("ALL 6 ARTIFACT & NUMERICAL CONSISTENCY CHECKS PASSED")
     print("=" * 70)
     return 0
 

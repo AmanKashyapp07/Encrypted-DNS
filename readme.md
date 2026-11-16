@@ -51,8 +51,8 @@ An on-path passive adversary (such as an ISP or local network observer) can trai
 
 1. **Protocol Framing Reduces Leakage on Most Resolvers:** On Cloudflare, Quad9, and AdGuard, HTTP/3 significantly suppresses fingerprintability (leakage reduced by 57% to 85%). QUIC's mandatory Initial packet padding ($\ge 1200$ bytes) and unified frame multiplexing act as natural padding against query-length leakage.
 2. **The Google Anomaly (Implementation Outweighs Protocol):** Google DoH/3 exhibits smaller privacy gains (15.0% vs. 21.3%). Packet inspection revealed that Google returns unpadded response payloads where downstream packet size variations strongly correlate with the number of DNS resource records in the answer section, preserving distinct packet-size signatures.
-3. **Cross-Network Transfer Collapse:** Classifiers trained on fiber broadband (Airtel) completely fail when deployed against cellular traffic (Jio), dropping to **1.6%–2.4%** accuracy (indistinguishable from the 2.0% random chance baseline for the 50 shared domains). Two-sample Kolmogorov-Smirnov tests confirm major distribution shifts ($p < 10^{-6}$) in flow sizes and inter-arrival times across access networks.
-4. **Cellular UDP/443 Inaccessibility:** On Reliance Jio cellular, **100% of the 3,000 DoH/3 queries timed out** with 0 packets returned. Observations are consistent with carrier middlebox filtering or upstream network dropping of outbound UDP port 443; in production environments where UDP 443 is blocked or unroutable, clients fall back to TCP-based transports.
+3. **Cross-Network Generalization Failure:** Classifiers trained on fiber broadband (Airtel) do not generalize when deployed against cellular traffic (Jio), yielding **1.7%–2.4%** accuracy, which is statistically indistinguishable from the 2.0% random chance baseline for the 50 shared domains ($p > 0.05$). Two-sample Kolmogorov-Smirnov tests confirm major distribution shifts ($p < 10^{-6}$) in flow sizes and inter-arrival times across access networks.
+4. **Cellular UDP/443 Inaccessibility:** On Reliance Jio cellular, **100% of the 3,000 DoH/3 queries timed out** with 0 packets returned. Observations demonstrate consistent client-side timeouts on outbound UDP port 443 on the cellular test link, whereas DoH (TCP/TLS) queries succeeded. While standard dual-stack clients may fall back to TCP transports when UDP is unreachable, such fallback behavior was not experimentally measured here.
 
 ---
 
@@ -63,7 +63,7 @@ An on-path passive adversary (such as an ISP or local network observer) can trai
  ------------------          --------------             -----------------            -------------------
  100 Pinned Domains          dumpcap / tshark           44 Flow Features             Random Forest, XGBoost
  (50 Global, 50 India)       Synchronous per-query      (Sizes, Bursts, IATs)        1D-CNN, GRU, Open-World
-        |                    BPF port 443 filtering     Zero label leakage           Leave-repeat-out CV
+        |                    BPF port 443 filtering     Zero label leakage           Temporal holdout eval
         |                           |                          |                     200 permutation tests
         v                           v                          v                               |
   q DNS Client 0.19.12  ===>  Access Network  ===>  data/processed/ Tables  ===>  results/ & figures/
@@ -99,7 +99,7 @@ An on-path passive adversary (such as an ISP or local network observer) can trai
 
 | Technical Challenge | Root Cause | Engineering Solution |
 | :--- | :--- | :--- |
-| **Artificially inflated classifier accuracy** | Random train/test splits leak temporal session correlation across queries. | Implemented strict leave-repeat-out temporal cross-validation. |
+| **Artificially inflated classifier accuracy** | Random train/test splits leak temporal session correlation across queries. | Implemented strict leave-repeat-out temporal holdout partitioning. |
 | **Model shortcut learning** | Residual protocol/address metadata (IPs, ports, headers) allows trivial classification. | Enforced zero-label-leakage filter; validated statistical significance against 200 label-permutation baseline tests ($p < 0.005$). |
 | **Google DoH/3 persistent leakage** | Unpadded server responses scale directly with DNS answer record count. | Extracted packet-level breakdown; identified implementation variance rather than protocol failure. |
 | **Cross-network transfer collapse** | Access network differences in latency and packet framing alter IATs and packet sizes. | Quantified distribution shifts via Kolmogorov-Smirnov tests ($p < 10^{-6}$); trained pooled multi-network models to recover generalized representations (15.4%–19.2%). |
@@ -110,7 +110,7 @@ An on-path passive adversary (such as an ISP or local network observer) can trai
 ## 6. Testing and Reproducibility
 
 ```bash
-# Execute automated test suite (10/10 tests pass)
+# Execute automated test suite (30 tests pass)
 python3 -m unittest discover tests
 ```
 
