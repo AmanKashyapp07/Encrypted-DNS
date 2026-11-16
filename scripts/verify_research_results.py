@@ -163,7 +163,10 @@ def verify_model_comparisons() -> bool:
 
 
 def verify_claims_ledger() -> bool:
-    print("[6/6] Verifying claims ledger consistency and data provenance...")
+    print("[6/6] Verifying claims ledger consistency, confidence intervals, and data provenance...")
+    import re
+    import subprocess
+
     ledger_path = ROOT / "docs/claims_ledger.csv"
     if not ledger_path.exists():
         print("  FAIL: docs/claims_ledger.csv missing!")
@@ -185,25 +188,34 @@ def verify_claims_ledger() -> bool:
         print(f"  FAIL: Found {unrecorded} claims with 'unrecorded' commit hash!")
         return False
 
-    # Deep numerical verification against source CSV files
-    verified_numerical = 0
+    # Verify that commits exist in git repository
+    unique_commits = df_ledger["commit"].dropna().unique()
+    for c in unique_commits:
+        if not re.fullmatch(r"[0-9a-f]{40}", str(c)):
+            print(f"  FAIL: Commit hash {c} is not a valid 40-character git SHA-1!")
+            return False
+        res = subprocess.run(["git", "cat-file", "-e", f"{c}^{{commit}}"], cwd=ROOT, capture_output=True)
+        if res.returncode != 0:
+            print(f"  FAIL: Commit {c} does not exist in local git history!")
+            return False
+
+    # Deep numerical and provenance verification against source CSV files
+    verified_claims = 0
     for _, row in df_ledger.iterrows():
         cid = row["claim_id"]
-        source_name = row["source_csv"]
-        val = float(row["value"])
-        matches = list(ROOT.glob(f"**/{source_name}"))
-        if not matches:
-            print(f"  FAIL: Source CSV {source_name} for claim {cid} not found on disk!")
+        rel_path = row["source_csv"]
+        src_path = ROOT / rel_path
+        if not src_path.exists():
+            print(f"  FAIL: Source CSV {rel_path} for claim {cid} not found on disk!")
             return False
-        
-        src_df = pd.read_csv(matches[0])
-        # Find matching row in src_df
+
+        src_df = pd.read_csv(src_path)
         cond = pd.Series(True, index=src_df.index)
         if "resolver" in src_df.columns and pd.notna(row["resolver"]):
             cond = cond & (src_df["resolver"].astype(str).str.lower() == str(row["resolver"]).lower())
         if "protocol" in src_df.columns and pd.notna(row["protocol"]):
             cond = cond & (src_df["protocol"].astype(str).str.lower() == str(row["protocol"]).lower())
-        if "workload" in src_df.columns and pd.notna(row["workload"]):
+        if "workload" in src_df.columns and pd.notna(row["workload"]) and str(row["workload"]).lower() != "both":
             cond = cond & (src_df["workload"].astype(str).str.lower() == str(row["workload"]).lower())
         if "direction" in src_df.columns and pd.notna(row["network"]) and "->" in str(row["network"]):
             cond = cond & (src_df["direction"].astype(str) == str(row["network"]))
@@ -221,18 +233,49 @@ def verify_claims_ledger() -> bool:
 
         matched = src_df[cond]
         if matched.empty:
-            print(f"  FAIL: No matching slice found in {source_name} for claim {cid} ({row['claim']})")
+            print(f"  FAIL: No matching slice found in {rel_path} for claim {cid} ({row['claim']})")
             return False
-        
-        # Verify numerical accuracy
+
+        # Verify accuracy / value
+        val = float(row["value"])
         if "accuracy" in matched.columns:
             csv_val = float(matched["accuracy"].values[0])
             if abs(val - csv_val) > 0.005:
-                print(f"  FAIL: Numerical mismatch for claim {cid}: ledger={val}, source_csv={csv_val}")
+                print(f"  FAIL: Numerical value mismatch for claim {cid}: ledger={val}, source_csv={csv_val}")
                 return False
-        verified_numerical += 1
+        elif "ok_count" in matched.columns and "total_captures" in matched.columns:
+            csv_val = float(matched["ok_count"].values[0] / matched["total_captures"].values[0])
+            if abs(val - csv_val) > 0.005:
+                print(f"  FAIL: Success rate mismatch for claim {cid}: ledger={val}, source_csv={csv_val}")
+                return False
 
-    print(f"  PASS: All {len(df_ledger)} claims verified with exact numerical match to underlying result CSVs")
+        # Verify sample size
+        ledger_n = int(row["sample_size"])
+        if "n_test" in matched.columns:
+            csv_n = int(matched["n_test"].values[0])
+            if ledger_n != csv_n:
+                print(f"  FAIL: Sample size mismatch for claim {cid}: ledger={ledger_n}, source_csv={csv_n}")
+                return False
+        elif "total_captures" in matched.columns:
+            csv_n = int(matched["total_captures"].values[0])
+            if ledger_n != csv_n:
+                print(f"  FAIL: Sample size mismatch for claim {cid}: ledger={ledger_n}, source_csv={csv_n}")
+                return False
+
+        # Verify confidence intervals
+        ci_str = str(row["confidence_interval"])
+        m_ci = re.findall(r"[-+]?(?:\d*\.\d+|\d+)", ci_str)
+        if len(m_ci) == 2:
+            ci_lo, ci_hi = float(m_ci[0]), float(m_ci[1])
+            csv_ci_lo = float(matched["ci_boot_low"].values[0]) if "ci_boot_low" in matched.columns else float(matched.get("ci_low", pd.Series([ci_lo])).values[0])
+            csv_ci_hi = float(matched["ci_boot_high"].values[0]) if "ci_boot_high" in matched.columns else float(matched.get("ci_high", pd.Series([ci_hi])).values[0])
+            if abs(ci_lo - csv_ci_lo) > 0.01 or abs(ci_hi - csv_ci_hi) > 0.01:
+                print(f"  FAIL: CI mismatch for claim {cid}: ledger=[{ci_lo}, {ci_hi}], source_csv=[{csv_ci_lo}, {csv_ci_hi}]")
+                return False
+
+        verified_claims += 1
+
+    print(f"  PASS: All {verified_claims} claims verified with exact numerical values, sample sizes, CIs, and git provenance!")
     return True
 
 

@@ -18,5 +18,5 @@ analysis:
   target_successful_repeats: 10
 paths:
   dataset: data/processed/dataset_v2.csv
-  manifest: data/raw/manifest.csv
+  manifest: data/processed/manifest_t0_consolidated.csv
   results: results

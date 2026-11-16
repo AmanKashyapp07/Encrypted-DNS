@@ -401,21 +401,23 @@ def run_e5(df, a, out):
 
 
 def run_model_comparison(df, a, out):
-    """Evaluate Random Forest vs XGBoost on AdGuard DoH Global."""
+    """Evaluate Random Forest vs XGBoost on AdGuard DoH Global using temporal holdout."""
+    from src.encdns.analysis.stats import domain_clustered_bootstrap
+    
     sub = df[(df.resolver == "adguard") & (df.protocol == "doh")].copy()
     if "workload" in sub.columns and "global" in sub["workload"].values:
         sub = sub[sub["workload"] == "global"].copy()
     
-    repeats = sorted(sub["repeat"].unique())
-    train = sub[sub["repeat"].isin(repeats[:-2])]
-    test = sub[sub["repeat"].isin(repeats[-2:])]
+    train = sub[sub["repeat"].between(8, 17)]
+    test = sub[sub["repeat"].between(18, 19)]
     shared = sorted(set(train.domain) & set(test.domain))
     train = train[train.domain.isin(shared)]
     test = test[test.domain.isin(shared)]
     
-    X_tr = train[FEATS].to_numpy(float)
+    feats = [f for f in FEATS if f in sub.columns]
+    X_tr = train[feats].to_numpy(float)
     y_tr = train.domain.to_numpy()
-    X_te = test[FEATS].to_numpy(float)
+    X_te = test[feats].to_numpy(float)
     y_te = test.domain.to_numpy()
     
     seeds = (17, 42, 101)
@@ -424,20 +426,24 @@ def run_model_comparison(df, a, out):
     
     for m_name in models_to_test:
         seed_accs = []
+        seed_preds = []
         for s in seeds:
             le = LabelEncoder().fit(y_tr)
             if m_name == "rf":
-                m = RandomForestClassifier(n_estimators=100, class_weight="balanced_subsample", random_state=s, n_jobs=a.jobs)
+                m = RandomForestClassifier(n_estimators=100, class_weight="balanced_subsample", random_state=s, n_jobs=-1)
             else:
                 m = XGBClassifier(n_estimators=200, max_depth=5, learning_rate=0.1, subsample=0.9,
-                                  colsample_bytree=0.9, random_state=s, n_jobs=a.jobs,
+                                  colsample_bytree=0.9, random_state=s, n_jobs=-1,
                                   eval_metric="mlogloss", tree_method="hist", verbosity=0)
             m.fit(X_tr, le.transform(y_tr))
             preds = le.classes_[m.predict(X_te)]
             seed_accs.append(accuracy_score(y_te, preds))
+            seed_preds.append(preds)
         
         mean_acc = float(np.mean(seed_accs))
-        lo, hi = wilson(int(round(mean_acc * len(y_te))), len(y_te))
+        boot_lo, boot_hi = domain_clustered_bootstrap(
+            y_te, np.array(seed_preds), y_te, n_bootstraps=1000, seed=42
+        )
         rows.append({
             "task": "Domain Fingerprinting (AdGuard DoH Global)",
             "model": m_name,
@@ -446,13 +452,18 @@ def run_model_comparison(df, a, out):
             "n_test": len(y_te),
             "accuracy": round(mean_acc, 4),
             "accuracy_seed_sd": round(float(np.std(seed_accs)), 4),
-            "ci_low": round(lo, 4),
-            "ci_high": round(hi, 4),
+            "ci_low": round(boot_lo, 4),
+            "ci_high": round(boot_hi, 4),
+            "ci_boot_low": round(boot_lo, 4),
+            "ci_boot_high": round(boot_hi, 4),
             "chance": round(1.0 / len(shared), 4),
         })
     res_df = pd.DataFrame(rows)
-    res_df.to_csv(out / "model_comparison.csv", index=False)
-    print(f"Saved: {out / 'model_comparison.csv'}")
+    out_dir = Path(out) if not isinstance(out, Path) else out
+    if (ROOT / "results/airtel_advanced_20261113").exists():
+        res_df.to_csv(ROOT / "results/airtel_advanced_20261113/model_comparison.csv", index=False)
+    res_df.to_csv(out_dir / "model_comparison.csv", index=False)
+    print(f"Saved: {out_dir / 'model_comparison.csv'}")
     return res_df
 
 

@@ -1,9 +1,9 @@
 workload,resolver,protocol,direction,shared_domains,n_train,n_test,accuracy,accuracy_sd,ci_low,ci_high,ci_boot_low,ci_boot_high,chance
-global,google,doh,Airtel -> Jio,50,600,500,0.0167,0.0062,0.0081,0.0313,0.0,0.018,0.02
-global,google,doh,Jio -> Airtel,50,500,600,0.02,0.0,0.0115,0.0346,0.0,0.06,0.02
-global,adguard,doh,Airtel -> Jio,50,600,492,0.0203,0.0029,0.0111,0.037,0.004,0.0325,0.02
-global,adguard,doh,Jio -> Airtel,50,492,600,0.0217,0.0027,0.0127,0.0367,0.0041,0.0483,0.02
-india,google,doh,Airtel -> Jio,50,600,499,0.0174,0.0041,0.0095,0.0339,0.0,0.0533,0.02
-india,google,doh,Jio -> Airtel,50,499,600,0.0183,0.0014,0.0103,0.0325,0.0,0.0467,0.02
-india,adguard,doh,Airtel -> Jio,50,554,406,0.0238,0.0061,0.0134,0.0447,0.0026,0.0362,0.02
-india,adguard,doh,Jio -> Airtel,50,406,554,0.0205,0.0052,0.0111,0.0352,0.0071,0.0472,0.02
+global,google,doh,Airtel -> Jio,50,600,500,0.0167,0.0062,0.0,0.0473,0.0,0.0473,0.02
+global,google,doh,Jio -> Airtel,50,500,600,0.02,0.0,0.0,0.06,0.0,0.06,0.02
+global,adguard,doh,Airtel -> Jio,50,600,492,0.0203,0.0029,0.0054,0.04,0.0054,0.04,0.02
+global,adguard,doh,Jio -> Airtel,50,492,600,0.0217,0.0027,0.0028,0.0522,0.0028,0.0522,0.02
+india,google,doh,Airtel -> Jio,50,600,499,0.0174,0.0041,0.0013,0.0481,0.0013,0.0481,0.02
+india,google,doh,Jio -> Airtel,50,499,600,0.0183,0.0014,0.0006,0.0672,0.0006,0.0672,0.02
+india,adguard,doh,Airtel -> Jio,50,554,406,0.0238,0.0061,0.0084,0.0438,0.0084,0.0438,0.02
+india,adguard,doh,Jio -> Airtel,50,406,554,0.0205,0.0052,0.0085,0.0365,0.0085,0.0365,0.02

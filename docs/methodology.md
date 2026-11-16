@@ -49,18 +49,17 @@ $$\text{Chance Baseline} = \frac{1}{N}$$
   Because Airtel tested 100 domains and Jio tested 50 domains within each workload, cross-network transfer is evaluated strictly on the **50 shared domains**:
   $$\text{Chance} = \frac{1}{50} = \mathbf{2.0\%} \quad (0.020)$$
 
-### 3.3 Wilson Score 95% Confidence Intervals
-All reported classification accuracies are accompanied by two-sided 95% Wilson score intervals, which provide robust asymmetric coverage for binomial proportions near extreme boundaries:
-$$CI_{95\%} = \frac{\hat{p} + \frac{z^2}{2n} \pm z \sqrt{\frac{\hat{p}(1-\hat{p})}{n} + \frac{z^2}{4n^2}}}{1 + \frac{z^2}{n}}$$
-where $z = 1.96$, $\hat{p}$ is the sample accuracy, and $n$ is the test set size.
+### 3.3 Cluster-Robust Uncertainty: Domain-Level Block Bootstrap
+Because repeated queries for the same domain exhibit intra-cluster correlation (violating independent Bernoulli assumptions), reported confidence intervals are constructed using a domain-level block bootstrap ($M = 1000$ iterations). In each bootstrap replicate, candidate domains are resampled with replacement, and all associated test observations are gathered. Multi-seed test accuracy across the three evaluation seeds is computed on the resampled set, yielding empirical 2.5th and 97.5th percentiles that robustly reflect sampling uncertainty under domain clustering.
 
-### 3.4 Label-Permutation Significance Tests (Empirical Null Distribution)
-To confirm that classifier accuracy does not stem from statistical noise or class imbalance:
+### 3.4 Domain-Clustered Permutation Significance Tests (Empirical Null Distribution)
+To evaluate statistical significance under the null hypothesis $H_0: P(Y \mid X) = P(Y)$ without breaking intra-domain repeat structure:
 1. For each experimental slice, 200 independent permutations are executed.
-2. In each iteration, the true domain labels in the test set are randomly permuted, breaking the feature-label relationship while preserving marginal distributions.
-3. The empirical $p$-value is computed as the fraction of permutations where permuted accuracy meets or exceeds observed accuracy:
-   $$p = \frac{1 + \sum_{j=1}^{200} \mathbb{I}(\text{Acc}_{\text{perm}, j} \ge \text{Acc}_{\text{observed}})}{201}$$
-4. All reported headline results satisfy $p < 0.005$ (0 out of 200 permuted iterations exceeded observed accuracy).
+2. In each iteration, domain identity labels are permuted at the domain level across unique test domains, mapping all queries of a domain to the same permuted identifier, preserving the repeated-measures clustering structure.
+3. The empirical null distribution is evaluated identically across the same three model seeds as observed accuracy.
+4. The empirical $p$-value is computed as:
+   $$p = \frac{1 + \sum_{j=1}^{200} \mathbb{I}(\bar{\text{Acc}}_{\text{null}, j} \ge \bar{\text{Acc}}_{\text{observed}})}{201}$$
+5. All 16 reported headline results satisfy $p < 0.005$ (0 out of 200 permuted iterations met or exceeded observed accuracy). Multi-comparison FDR adjustment using Benjamini-Hochberg confirms that all slices remain significant at $\alpha = 0.05$.
 
 ---
 

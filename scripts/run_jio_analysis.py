@@ -42,7 +42,10 @@ from scipy.stats import ks_2samp
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
-from src.encdns.analysis.stats import domain_clustered_bootstrap
+from src.encdns.analysis.stats import (
+    domain_clustered_bootstrap,
+    domain_clustered_permutation_test,
+)
 
 BASE_FEATURES = [
     "n_pkts", "n_up", "n_down", "bytes_up", "bytes_down", "bytes_total",
@@ -96,36 +99,33 @@ def run_n1(df_jio: pd.DataFrame, out: Path, n_perm: int = 200) -> pd.DataFrame:
         
         seed_scores = []
         seed_preds = []
+        test_y = test["domain"].to_numpy()
         for seed in SEEDS:
             m = rf_model(seed, n_estimators=100)
             m.fit(train[BASE_FEATURES], train["domain"])
             preds = m.predict(test[BASE_FEATURES])
-            seed_scores.append(accuracy_score(test["domain"], preds))
+            seed_scores.append(accuracy_score(test_y, preds))
             seed_preds.append(preds)
             
+        seed_preds_arr = np.array(seed_preds)
         mean_acc = float(np.mean(seed_scores))
-        k = int(round(mean_acc * len(test)))
-        lo, hi = wilson_interval(k, len(test))
-        boot_lo, boot_hi = domain_clustered_bootstrap(test["domain"].to_numpy(), seed_preds[0], test["domain"].to_numpy(), n_bootstraps=500, seed=17)
+        
+        # Cluster-robust domain bootstrap CI across all 3 seeds
+        boot_lo, boot_hi = domain_clustered_bootstrap(
+            test_y, seed_preds_arr, test_y, n_bootstraps=1000, seed=42
+        )
         chance = 1.0 / len(domains)
         
-        # Symmetric Permutation baseline test with 100 estimators
-        rng = np.random.default_rng(17)
-        perm_accs = []
-        m_base = rf_model(17, n_estimators=100)
-        m_base.fit(train[BASE_FEATURES], train["domain"])
-        preds_base = m_base.predict(test[BASE_FEATURES])
-        test_y = test["domain"].to_numpy()
-        for _ in range(n_perm):
-            shuffled_test_y = rng.permutation(test_y)
-            perm_accs.append(accuracy_score(shuffled_test_y, preds_base))
-        p_val = float((1 + sum(acc >= mean_acc for acc in perm_accs)) / (1 + len(perm_accs)))
+        # Domain-clustered permutation test evaluated identically on the 3 seeds
+        p_val, _ = domain_clustered_permutation_test(
+            test_y, seed_preds_arr, test_y, n_permutations=n_perm, seed=42
+        )
         
         rows.append({
             "workload": wl, "resolver": res, "protocol": proto,
             "domains": len(domains), "n_train": len(train), "n_test": len(test),
             "accuracy": round(mean_acc, 4), "accuracy_sd": round(float(np.std(seed_scores)), 4),
-            "ci_low": round(lo, 4), "ci_high": round(hi, 4),
+            "ci_low": round(boot_lo, 4), "ci_high": round(boot_hi, 4),
             "ci_boot_low": round(boot_lo, 4), "ci_boot_high": round(boot_hi, 4),
             "chance": round(chance, 4), "p_value": round(p_val, 4),
         })
@@ -159,16 +159,20 @@ def run_n2(df_airtel: pd.DataFrame, df_jio: pd.DataFrame, out: Path) -> pd.DataF
                 ("Jio -> Airtel", (j_clean, a_clean)),
             ]:
                 seed_accs = []
+                seed_preds = []
+                test_y = test_df["domain"].to_numpy()
                 for seed in SEEDS:
                     m = rf_model(seed)
                     m.fit(train_df[BASE_FEATURES], train_df["domain"])
                     preds = m.predict(test_df[BASE_FEATURES])
-                    seed_accs.append(accuracy_score(test_df["domain"], preds))
+                    seed_accs.append(accuracy_score(test_y, preds))
+                    seed_preds.append(preds)
                 
+                seed_preds_arr = np.array(seed_preds)
                 mean_acc = float(np.mean(seed_accs))
-                k = int(round(mean_acc * len(test_df)))
-                lo, hi = wilson_interval(k, len(test_df))
-                boot_lo, boot_hi = domain_clustered_bootstrap(test_df["domain"].to_numpy(), preds, test_df["domain"].to_numpy(), n_bootstraps=500, seed=17)
+                boot_lo, boot_hi = domain_clustered_bootstrap(
+                    test_y, seed_preds_arr, test_y, n_bootstraps=1000, seed=42
+                )
                 chance = 1.0 / len(shared)
                 
                 rows.append({
@@ -176,7 +180,7 @@ def run_n2(df_airtel: pd.DataFrame, df_jio: pd.DataFrame, out: Path) -> pd.DataF
                     "direction": direction, "shared_domains": len(shared),
                     "n_train": len(train_df), "n_test": len(test_df),
                     "accuracy": round(mean_acc, 4), "accuracy_sd": round(float(np.std(seed_accs)), 4),
-                    "ci_low": round(lo, 4), "ci_high": round(hi, 4),
+                    "ci_low": round(boot_lo, 4), "ci_high": round(boot_hi, 4),
                     "ci_boot_low": round(boot_lo, 4), "ci_boot_high": round(boot_hi, 4),
                     "chance": round(chance, 4),
                 })
@@ -222,20 +226,25 @@ def run_n3(df_airtel: pd.DataFrame, df_jio: pd.DataFrame, out: Path) -> pd.DataF
                 ("Airtel+Jio Composite (held-out)", pd.concat([a_te, j_te]))
             ]:
                 seed_accs = []
+                seed_preds = []
+                test_y = te_df["domain"].to_numpy()
                 for seed in SEEDS:
                     m = rf_model(seed)
                     m.fit(pooled_tr[BASE_FEATURES], pooled_tr["domain"])
                     preds = m.predict(te_df[BASE_FEATURES])
-                    seed_accs.append(accuracy_score(te_df["domain"], preds))
+                    seed_accs.append(accuracy_score(test_y, preds))
+                    seed_preds.append(preds)
+                    
+                seed_preds_arr = np.array(seed_preds)
                 mean_acc = float(np.mean(seed_accs))
-                k = int(round(mean_acc * len(te_df)))
-                lo, hi = wilson_interval(k, len(te_df))
-                boot_lo, boot_hi = domain_clustered_bootstrap(te_df["domain"].to_numpy(), preds, te_df["domain"].to_numpy(), n_bootstraps=500, seed=17)
+                boot_lo, boot_hi = domain_clustered_bootstrap(
+                    test_y, seed_preds_arr, test_y, n_bootstraps=1000, seed=42
+                )
                 rows.append({
                     "workload": wl, "resolver": res, "test_network": test_net,
                     "shared_domains": len(shared), "n_train_pooled": len(pooled_tr),
                     "n_test": len(te_df), "accuracy": round(mean_acc, 4),
-                    "ci_low": round(lo, 4), "ci_high": round(hi, 4),
+                    "ci_low": round(boot_lo, 4), "ci_high": round(boot_hi, 4),
                     "ci_boot_low": round(boot_lo, 4), "ci_boot_high": round(boot_hi, 4),
                     "chance": round(1.0 / len(shared), 4),
                 })

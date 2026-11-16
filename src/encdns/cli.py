@@ -157,8 +157,8 @@ def analyze(args: argparse.Namespace) -> int:
     target_k = 10 if all(values["k10"] >= 60 for values in domain_counts.values()) else 8
     metadata = run_metadata(ROOT / "config" / "project.yaml", dataset)
     metadata.update({"target_k": target_k, "domain_counts": domain_counts,
-                     "headline_folds": "5 folds, 2 repeats held out",
-                     "real_trees": 100, "null_trees": 50,
+                     "headline_split": "temporal holdout: train repeats 8-17, test repeats 18-19",
+                     "real_trees": config["rf_estimators"], "null_trees": config["rf_estimators"],
                      "permutations": args.permutations or config["permutations"]})
     write_json(output / "run_metadata.json", metadata)
     seeds = config["seed_list"]

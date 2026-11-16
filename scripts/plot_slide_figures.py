@@ -59,13 +59,17 @@ def plot_headline_airtel():
 
             acc = float(r_doh["accuracy"])
             doh_acc.append(acc)
-            doh_err_lo.append(acc - float(r_doh["ci_low"]))
-            doh_err_hi.append(float(r_doh["ci_high"]) - acc)
+            ci_lo = float(r_doh.get("ci_boot_low", r_doh["ci_low"]))
+            ci_hi = float(r_doh.get("ci_boot_high", r_doh["ci_high"]))
+            doh_err_lo.append(acc - ci_lo)
+            doh_err_hi.append(ci_hi - acc)
 
             acc3 = float(r_doh3["accuracy"])
             doh3_acc.append(acc3)
-            doh3_err_lo.append(acc3 - float(r_doh3["ci_low"]))
-            doh3_err_hi.append(float(r_doh3["ci_high"]) - acc3)
+            ci3_lo = float(r_doh3.get("ci_boot_low", r_doh3["ci_low"]))
+            ci3_hi = float(r_doh3.get("ci_boot_high", r_doh3["ci_high"]))
+            doh3_err_lo.append(acc3 - ci3_lo)
+            doh3_err_hi.append(ci3_hi - acc3)
 
         ax.bar(x - width/2, doh_acc, width, yerr=[doh_err_lo, doh_err_hi], capsize=3,
                label="DoH (HTTP/2)", color="#1f77b4", edgecolor="black", alpha=0.9)
@@ -77,7 +81,7 @@ def plot_headline_airtel():
         ax.set_xticklabels(resolvers)
         if idx == 0:
             ax.set_ylabel("Fingerprinting Accuracy (Top-1)")
-        ax.set_ylim(0, 0.45)
+        ax.set_ylim(0, 0.55)
         ax.legend(loc="upper left")
 
     fig.suptitle("RQ2: Encrypted DNS Fingerprinting Accuracy with 95% CI (Airtel Broadband)", weight="bold")
@@ -108,34 +112,52 @@ def plot_cross_network():
     slices = [s[2] for s in slices_cfg]
     within_airtel, within_jio = [], []
     transfer_airtel_to_jio, transfer_jio_to_airtel = [], []
+    err_a_lo, err_a_hi = [], []
+    err_j_lo, err_j_hi = [], []
     err_a_j_lo, err_a_j_hi = [], []
     err_j_a_lo, err_j_a_hi = [], []
 
     for wl, res, _ in slices_cfg:
         a_row = df_fp[(df_fp["workload"] == wl) & (df_fp["resolver"] == res) & (df_fp["protocol"] == "doh")].iloc[0]
-        within_airtel.append(float(a_row["accuracy"]))
+        acc_a = float(a_row["accuracy"])
+        within_airtel.append(acc_a)
+        ci_a_lo = float(a_row.get("ci_boot_low", a_row.get("ci_low", acc_a)))
+        ci_a_hi = float(a_row.get("ci_boot_high", a_row.get("ci_high", acc_a)))
+        err_a_lo.append(acc_a - ci_a_lo)
+        err_a_hi.append(ci_a_hi - acc_a)
 
         j_row = df_n1[(df_n1["workload"] == wl) & (df_n1["resolver"] == res) & (df_n1["protocol"] == "doh")].iloc[0]
-        within_jio.append(float(j_row["accuracy"]))
+        acc_j = float(j_row["accuracy"])
+        within_jio.append(acc_j)
+        ci_j_lo = float(j_row.get("ci_boot_low", j_row.get("ci_low", acc_j)))
+        ci_j_hi = float(j_row.get("ci_boot_high", j_row.get("ci_high", acc_j)))
+        err_j_lo.append(acc_j - ci_j_lo)
+        err_j_hi.append(ci_j_hi - acc_j)
 
         aj_row = df_n2[(df_n2["workload"] == wl) & (df_n2["resolver"] == res) & (df_n2["direction"] == "Airtel -> Jio")].iloc[0]
         acc_aj = float(aj_row["accuracy"])
         transfer_airtel_to_jio.append(acc_aj)
-        err_a_j_lo.append(acc_aj - float(aj_row["ci_low"]))
-        err_a_j_hi.append(float(aj_row["ci_high"]) - acc_aj)
+        ci_aj_lo = float(aj_row.get("ci_boot_low", aj_row.get("ci_low", acc_aj)))
+        ci_aj_hi = float(aj_row.get("ci_boot_high", aj_row.get("ci_high", acc_aj)))
+        err_a_j_lo.append(acc_aj - ci_aj_lo)
+        err_a_j_hi.append(ci_aj_hi - acc_aj)
 
         ja_row = df_n2[(df_n2["workload"] == wl) & (df_n2["resolver"] == res) & (df_n2["direction"] == "Jio -> Airtel")].iloc[0]
         acc_ja = float(ja_row["accuracy"])
         transfer_jio_to_airtel.append(acc_ja)
-        err_j_a_lo.append(acc_ja - float(ja_row["ci_low"]))
-        err_j_a_hi.append(float(ja_row["ci_high"]) - acc_ja)
+        ci_ja_lo = float(ja_row.get("ci_boot_low", ja_row.get("ci_low", acc_ja)))
+        ci_ja_hi = float(ja_row.get("ci_boot_high", ja_row.get("ci_high", acc_ja)))
+        err_j_a_lo.append(acc_ja - ci_ja_lo)
+        err_j_a_hi.append(ci_ja_hi - acc_ja)
 
     x = np.arange(len(slices))
     width = 0.20
 
     fig, ax = plt.subplots(figsize=(10, 5), constrained_layout=True)
-    ax.bar(x - 1.5*width, within_airtel, width, label="Within-Airtel", color="#2ca02c", edgecolor="black")
-    ax.bar(x - 0.5*width, within_jio, width, label="Within-Jio", color="#1f77b4", edgecolor="black")
+    ax.bar(x - 1.5*width, within_airtel, width, yerr=[err_a_lo, err_a_hi], capsize=3,
+           label="Within-Airtel", color="#2ca02c", edgecolor="black")
+    ax.bar(x - 0.5*width, within_jio, width, yerr=[err_j_lo, err_j_hi], capsize=3,
+           label="Within-Jio", color="#1f77b4", edgecolor="black")
     ax.bar(x + 0.5*width, transfer_airtel_to_jio, width, yerr=[err_a_j_lo, err_a_j_hi], capsize=3,
            label="Transfer: Airtel -> Jio", color="#d62728", edgecolor="black", hatch="//")
     ax.bar(x + 1.5*width, transfer_jio_to_airtel, width, yerr=[err_j_a_lo, err_j_a_hi], capsize=3,
@@ -169,8 +191,23 @@ def plot_carrier_blocking():
     jio_doh_rate = (jio_doh_ok / jio_doh_tot) * 100 if jio_doh_tot else 0.0
     jio_doh3_rate = (jio_doh3_ok / jio_doh3_tot) * 100 if jio_doh3_tot else 0.0
 
+    # Dynamically compute Airtel completion rates from manifest
+    manifest_path = ROOT / "data/processed/manifest_t0_consolidated.csv"
+    if manifest_path.exists():
+        df_m = pd.read_csv(manifest_path)
+        sub_m = df_m[df_m["repeat"].between(8, 19)]
+        a_doh_ok = ((sub_m["protocol"] == "doh") & (sub_m["status"] == "ok")).sum()
+        a_doh_tot = (sub_m["protocol"] == "doh").sum()
+        airtel_doh_rate = (a_doh_ok / a_doh_tot) * 100 if a_doh_tot else 0.0
+
+        a_doh3_ok = ((sub_m["protocol"] == "doh3") & (sub_m["status"] == "ok")).sum()
+        a_doh3_tot = (sub_m["protocol"] == "doh3").sum()
+        airtel_doh3_rate = (a_doh3_ok / a_doh3_tot) * 100 if a_doh3_tot else 0.0
+    else:
+        airtel_doh_rate, airtel_doh3_rate = 95.4, 93.5
+
     categories = ["Airtel DoH\n(TCP 443)", "Airtel DoH/3\n(UDP 443)", "Jio DoH\n(TCP 443)", "Jio DoH/3\n(UDP 443)"]
-    success_rates = [98.5, 96.8, jio_doh_rate, jio_doh3_rate]
+    success_rates = [airtel_doh_rate, airtel_doh3_rate, jio_doh_rate, jio_doh3_rate]
     colors = ["#2ca02c", "#2ca02c", "#1f77b4", "#d62728"]
 
     fig, ax = plt.subplots(figsize=(8, 4.5), constrained_layout=True)

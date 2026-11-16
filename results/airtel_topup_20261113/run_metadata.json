@@ -1,5 +1,5 @@
 {
-  "config_sha256": "85ca0fad0ff4ee74c4b66f590c1fd796122b74e0a80ef620f7510b46eb557b44",
+  "config_sha256": "064998e903ee9b8bfa11b886cd33ac13db7f5f99a666dcff43a4b9816cf8421d",
   "dataset_sha256": "9c2bdd4018ec7c9fab335f3025219636b1c61ccf04d1d55fe9c6672e86d0aaac",
   "domain_counts": {
     "global": {
@@ -11,14 +11,14 @@
       "k8": 100
     }
   },
-  "headline_folds": "5 folds, 2 repeats held out",
-  "null_trees": 50,
+  "headline_split": "temporal holdout: train repeats 8-17, test repeats 18-19",
+  "null_trees": 100,
   "permutations": 200,
   "platform": "macOS-27.2.1-arm64-arm-64bit",
   "python": "3.11.15",
   "q_version": "https://github.com/natesales/q version 0.19.12 (Homebrew 2026-02-27T04:43:52Z)",
   "real_trees": 100,
   "target_k": 10,
-  "timestamp_utc": "2026-11-13T11:04:13.578317+00:00",
+  "timestamp_utc": "2026-11-16T10:15:02.297934+00:00",
   "tshark_version": "TShark (Wireshark) 4.6.9 (Git commit 2d548b197c75)."
 }

@@ -1,7 +1,7 @@
 # Jio and Cross-Network Empirical Findings (N1–N8)
 
 Generated: 2026-11-16
-Analysis Directory: `results/jio_analysis_20261113`
+Analysis Directory: `/Users/amankashyap/Documents/DNS-Analysis/results/jio_analysis_20261113`
 
 ## Executive Summary
 This report analyzes the measured Reliance Jio mobile cellular dataset (6,000 captures across 100 domains, 3 resolvers, and 2 protocols) and evaluates cross-network transfer between Airtel (broadband) and Jio (cellular).
@@ -13,10 +13,10 @@ Evaluated on the 50-domain shared workload across 10 repeats using leave-2-repea
 
 | workload | resolver | protocol | domains | n_train | n_test | accuracy | accuracy_sd | ci_low | ci_high | ci_boot_low | ci_boot_high | chance | p_value |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| global | adguard | doh | 50 | 394 | 98 | 0.0408 | 0.0083 | 0.016 | 0.1003 | 0.0 | 0.0707 | 0.02 | 0.1642 |
-| global | google | doh | 50 | 400 | 100 | 0.1567 | 0.0125 | 0.101 | 0.2442 | 0.08 | 0.2052 | 0.02 | 0.005 |
-| india | adguard | doh | 34 | 264 | 67 | 0.0846 | 0.0141 | 0.0417 | 0.1819 | 0.015 | 0.1364 | 0.0294 | 0.0249 |
-| india | google | doh | 50 | 399 | 100 | 0.1233 | 0.0125 | 0.07 | 0.1981 | 0.04 | 0.19 | 0.02 | 0.005 |
+| global | adguard | doh | 50 | 394 | 98 | 0.0408 | 0.0083 | 0.0101 | 0.0816 | 0.0101 | 0.0816 | 0.02 | 0.1244 |
+| global | google | doh | 50 | 400 | 100 | 0.1567 | 0.0125 | 0.1033 | 0.2167 | 0.1033 | 0.2167 | 0.02 | 0.005 |
+| india | adguard | doh | 34 | 264 | 67 | 0.0846 | 0.0141 | 0.0294 | 0.1542 | 0.0294 | 0.1542 | 0.0294 | 0.0149 |
+| india | google | doh | 50 | 399 | 100 | 0.1233 | 0.0125 | 0.06 | 0.1967 | 0.06 | 0.1967 | 0.02 | 0.005 |
 
 
 **Key Findings:**
@@ -31,14 +31,14 @@ Evaluating whether an attacker trained on Airtel can fingerprint victims on Jio,
 
 | workload | resolver | protocol | direction | shared_domains | n_train | n_test | accuracy | accuracy_sd | ci_low | ci_high | ci_boot_low | ci_boot_high | chance |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| global | google | doh | Airtel -> Jio | 50 | 600 | 500 | 0.0167 | 0.0062 | 0.0081 | 0.0313 | 0.0 | 0.018 | 0.02 |
-| global | google | doh | Jio -> Airtel | 50 | 500 | 600 | 0.02 | 0.0 | 0.0115 | 0.0346 | 0.0 | 0.06 | 0.02 |
-| global | adguard | doh | Airtel -> Jio | 50 | 600 | 492 | 0.0203 | 0.0029 | 0.0111 | 0.037 | 0.004 | 0.0325 | 0.02 |
-| global | adguard | doh | Jio -> Airtel | 50 | 492 | 600 | 0.0217 | 0.0027 | 0.0127 | 0.0367 | 0.0041 | 0.0483 | 0.02 |
-| india | google | doh | Airtel -> Jio | 50 | 600 | 499 | 0.0174 | 0.0041 | 0.0095 | 0.0339 | 0.0 | 0.0533 | 0.02 |
-| india | google | doh | Jio -> Airtel | 50 | 499 | 600 | 0.0183 | 0.0014 | 0.0103 | 0.0325 | 0.0 | 0.0467 | 0.02 |
-| india | adguard | doh | Airtel -> Jio | 50 | 554 | 406 | 0.0238 | 0.0061 | 0.0134 | 0.0447 | 0.0026 | 0.0362 | 0.02 |
-| india | adguard | doh | Jio -> Airtel | 50 | 406 | 554 | 0.0205 | 0.0052 | 0.0111 | 0.0352 | 0.0071 | 0.0472 | 0.02 |
+| global | google | doh | Airtel -> Jio | 50 | 600 | 500 | 0.0167 | 0.0062 | 0.0 | 0.0473 | 0.0 | 0.0473 | 0.02 |
+| global | google | doh | Jio -> Airtel | 50 | 500 | 600 | 0.02 | 0.0 | 0.0 | 0.06 | 0.0 | 0.06 | 0.02 |
+| global | adguard | doh | Airtel -> Jio | 50 | 600 | 492 | 0.0203 | 0.0029 | 0.0054 | 0.04 | 0.0054 | 0.04 | 0.02 |
+| global | adguard | doh | Jio -> Airtel | 50 | 492 | 600 | 0.0217 | 0.0027 | 0.0028 | 0.0522 | 0.0028 | 0.0522 | 0.02 |
+| india | google | doh | Airtel -> Jio | 50 | 600 | 499 | 0.0174 | 0.0041 | 0.0013 | 0.0481 | 0.0013 | 0.0481 | 0.02 |
+| india | google | doh | Jio -> Airtel | 50 | 499 | 600 | 0.0183 | 0.0014 | 0.0006 | 0.0672 | 0.0006 | 0.0672 | 0.02 |
+| india | adguard | doh | Airtel -> Jio | 50 | 554 | 406 | 0.0238 | 0.0061 | 0.0084 | 0.0438 | 0.0084 | 0.0438 | 0.02 |
+| india | adguard | doh | Jio -> Airtel | 50 | 406 | 554 | 0.0205 | 0.0052 | 0.0085 | 0.0365 | 0.0085 | 0.0365 | 0.02 |
 
 
 **Key Findings:**
@@ -52,18 +52,18 @@ Evaluating whether pooling training data across Airtel + Jio restores fingerprin
 
 | workload | resolver | test_network | shared_domains | n_train_pooled | n_test | accuracy | ci_low | ci_high | ci_boot_low | ci_boot_high | chance |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| global | google | Airtel (held-out) | 50 | 900 | 100 | 0.1967 | 0.1334 | 0.2888 | 0.13 | 0.28 | 0.02 |
-| global | google | Jio (held-out) | 50 | 900 | 100 | 0.15 | 0.0931 | 0.2328 | 0.09 | 0.22 | 0.02 |
-| global | google | Airtel+Jio Composite (held-out) | 50 | 900 | 200 | 0.1733 | 0.1286 | 0.2336 | 0.1224 | 0.2376 | 0.02 |
-| global | adguard | Airtel (held-out) | 50 | 894 | 100 | 0.3367 | 0.2546 | 0.4372 | 0.23 | 0.43 | 0.02 |
-| global | adguard | Jio (held-out) | 50 | 894 | 98 | 0.0442 | 0.016 | 0.1003 | 0.01 | 0.0808 | 0.02 |
-| global | adguard | Airtel+Jio Composite (held-out) | 50 | 894 | 198 | 0.1919 | 0.1431 | 0.2524 | 0.1323 | 0.2425 | 0.02 |
-| india | google | Airtel (held-out) | 50 | 899 | 100 | 0.1933 | 0.1251 | 0.2778 | 0.08 | 0.22 | 0.02 |
-| india | google | Jio (held-out) | 50 | 899 | 100 | 0.1333 | 0.0776 | 0.2098 | 0.06 | 0.2 | 0.02 |
-| india | google | Airtel+Jio Composite (held-out) | 50 | 899 | 200 | 0.1633 | 0.12 | 0.2227 | 0.085 | 0.185 | 0.02 |
-| india | adguard | Airtel (held-out) | 50 | 785 | 96 | 0.2535 | 0.1741 | 0.3451 | 0.1587 | 0.3474 | 0.02 |
-| india | adguard | Jio (held-out) | 50 | 785 | 79 | 0.0338 | 0.013 | 0.1058 | 0.0 | 0.0621 | 0.02 |
-| india | adguard | Airtel+Jio Composite (held-out) | 50 | 785 | 175 | 0.1543 | 0.1083 | 0.2152 | 0.0936 | 0.1995 | 0.02 |
+| global | google | Airtel (held-out) | 50 | 900 | 100 | 0.1967 | 0.1267 | 0.2667 | 0.1267 | 0.2667 | 0.02 |
+| global | google | Jio (held-out) | 50 | 900 | 100 | 0.15 | 0.09 | 0.2167 | 0.09 | 0.2167 | 0.02 |
+| global | google | Airtel+Jio Composite (held-out) | 50 | 900 | 200 | 0.1733 | 0.1283 | 0.2267 | 0.1283 | 0.2267 | 0.02 |
+| global | adguard | Airtel (held-out) | 50 | 894 | 100 | 0.3367 | 0.2467 | 0.4267 | 0.2467 | 0.4267 | 0.02 |
+| global | adguard | Jio (held-out) | 50 | 894 | 98 | 0.0442 | 0.0139 | 0.0859 | 0.0139 | 0.0859 | 0.02 |
+| global | adguard | Airtel+Jio Composite (held-out) | 50 | 894 | 198 | 0.1919 | 0.1448 | 0.242 | 0.1448 | 0.242 | 0.02 |
+| india | google | Airtel (held-out) | 50 | 899 | 100 | 0.1933 | 0.1233 | 0.2701 | 0.1233 | 0.2701 | 0.02 |
+| india | google | Jio (held-out) | 50 | 899 | 100 | 0.1333 | 0.0699 | 0.2067 | 0.0699 | 0.2067 | 0.02 |
+| india | google | Airtel+Jio Composite (held-out) | 50 | 899 | 200 | 0.1633 | 0.1117 | 0.22 | 0.1117 | 0.22 | 0.02 |
+| india | adguard | Airtel (held-out) | 50 | 785 | 96 | 0.2535 | 0.172 | 0.3436 | 0.172 | 0.3436 | 0.02 |
+| india | adguard | Jio (held-out) | 50 | 785 | 79 | 0.0338 | 0.0042 | 0.0741 | 0.0042 | 0.0741 | 0.02 |
+| india | adguard | Airtel+Jio Composite (held-out) | 50 | 785 | 175 | 0.1543 | 0.1078 | 0.2057 | 0.1078 | 0.2057 | 0.02 |
 
 
 **Key Findings:**

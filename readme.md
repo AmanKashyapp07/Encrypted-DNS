@@ -40,17 +40,17 @@ An on-path passive adversary (such as an ISP or local network observer) can trai
 
 | Upstream Resolver | DoH (HTTP/2) Top-1 | DoH/3 (HTTP/3) Top-1 | Leakage Reduction |
 | :--- | :--- | :--- | :--- |
-| **Cloudflare** | 23.6% | 6.0% | **75% reduction** |
-| **Quad9** | 34.2% | 4.6% | **86% reduction** |
-| **AdGuard** | 26.2% | 8.9% | **66% reduction** |
-| **Google** | 17.5% | 16.9% | **~3% reduction (no practical gain)** |
+| **Cloudflare** | 26.3% | 7.2% | **73% reduction** |
+| **Quad9** | 45.2% | 6.6% | **85% reduction** |
+| **AdGuard** | 26.2% | 11.2% | **57% reduction** |
+| **Google** | 21.3% | 15.0% | **30% reduction** |
 
-*All results evaluated with leave-repeat-out temporal splits, 200 label-permutation baseline iterations ($p < 0.005$), domain-clustered bootstrap intervals, and 95% Wilson confidence intervals. Full derivations are documented in the [Paper Draft](docs/paper.md).*
+*All results evaluated with strict temporal holdout (repeats 8–17 train, 18–19 test), 200 domain-clustered permutation test iterations ($p < 0.005$), and 95% cluster-robust domain bootstrap confidence intervals. Full derivations are documented in the [Paper Draft](docs/paper.md).*
 
 ### Critical Systems Findings
 
-1. **Protocol Framing Reduces Leakage on Most Resolvers:** On Cloudflare, Quad9, and AdGuard, HTTP/3 significantly suppresses fingerprintability (leakage reduced by 66% to 86%). QUIC's mandatory Initial packet padding ($\ge 1200$ bytes) and unified frame multiplexing act as natural padding against query-length leakage.
-2. **The Google Anomaly (Implementation Outweighs Protocol):** Google DoH/3 shows almost zero privacy improvement (16.9% vs. 17.5%). Packet inspection revealed that Google returns unpadded response payloads where downstream packet size variations strongly correlate with the number of DNS resource records in the answer section, preserving distinct packet-size signatures.
+1. **Protocol Framing Reduces Leakage on Most Resolvers:** On Cloudflare, Quad9, and AdGuard, HTTP/3 significantly suppresses fingerprintability (leakage reduced by 57% to 85%). QUIC's mandatory Initial packet padding ($\ge 1200$ bytes) and unified frame multiplexing act as natural padding against query-length leakage.
+2. **The Google Anomaly (Implementation Outweighs Protocol):** Google DoH/3 exhibits smaller privacy gains (15.0% vs. 21.3%). Packet inspection revealed that Google returns unpadded response payloads where downstream packet size variations strongly correlate with the number of DNS resource records in the answer section, preserving distinct packet-size signatures.
 3. **Cross-Network Transfer Collapse:** Classifiers trained on fiber broadband (Airtel) completely fail when deployed against cellular traffic (Jio), dropping to **1.6%–2.4%** accuracy (indistinguishable from the 2.0% random chance baseline for the 50 shared domains). Two-sample Kolmogorov-Smirnov tests confirm major distribution shifts ($p < 10^{-6}$) in flow sizes and inter-arrival times across access networks.
 4. **Cellular UDP/443 Inaccessibility:** On Reliance Jio cellular, **100% of the 3,000 DoH/3 queries timed out** with 0 packets returned. Observations are consistent with carrier middlebox filtering or upstream network dropping of outbound UDP port 443; in production environments where UDP 443 is blocked or unroutable, clients fall back to TCP-based transports.
 
@@ -138,17 +138,24 @@ pip install -r requirements.txt
 Preprocessed feature datasets are version-controlled under `data/processed/` (`dataset_v2.csv`, `dataset_jio.csv`, `dataset_combined.csv`). The ~6-minute reproduction command suite below executes the entire machine learning and statistical evaluation suite from these saved feature datasets. (In contrast, the live packet capture campaign comprising 26,262 attempts required ~20+ hours of physical collection across residential broadband and mobile cellular networks.)
 
 ```bash
-# Step 1: Run broadband analysis modules (WP7 to WP11, WP13)
-python3 scripts/run_airtel_all.py
+# Step 1: Run headline Airtel fingerprinting with strict temporal holdout
+PYTHONPATH=src python3 -m encdns analyze --run-id airtel_topup_20261113
 
 # Step 2: Run cellular and cross-network transfer modules (N1 to N8)
 python3 scripts/run_jio_analysis.py
 
-# Step 3: Regenerate all publication-ready figures
+# Step 3: Run model comparisons and broadband analyses (WP7-WP11, WP13)
+python3 src/analysis_v2.py
+python3 scripts/run_airtel_all.py
+
+# Step 4: Regenerate all publication-ready figures
 python3 scripts/plot_slide_figures.py
+
+# Step 5: Verify all 39 empirical research claims against underlying CSVs
+python3 scripts/verify_research_results.py
 ```
 
-All results are written deterministically to `results/airtel_all_20261113/`, `results/jio_analysis_20261113/`, and `results/figures/`.
+All results are written deterministically to `results/airtel_topup_20261113/`, `results/jio_analysis_20261113/`, `results/airtel_advanced_20261113/`, `results/airtel_all_20261113/`, and `results/figures/`.
 
 ---
 
@@ -174,6 +181,8 @@ All results are written deterministically to `results/airtel_all_20261113/`, `re
 │   │   ├── fig2_cross_network_transfer.png
 │   │   ├── fig3_carrier_quic_blocking.png
 │   │   └── fig4_feature_distribution_shift.png
+│   ├── airtel_topup_20261113/ # Headline Airtel fingerprinting (RQ1/RQ2)
+│   ├── airtel_advanced_20261113/ # Model comparison outputs (RF vs XGBoost)
 │   ├── airtel_all_20261113/   # Airtel analysis outputs (WP7-WP11, WP13)
 │   └── jio_analysis_20261113/ # Jio and cross-network outputs (N1-N8)
 ├── scripts/
