@@ -183,7 +183,11 @@ def analyze(args: argparse.Namespace) -> int:
             checkpoint.write_text(json.dumps(item), encoding="utf-8")
             rows.append(item)
         log(f"done {workload}/{resolver}/{protocol}")
-    table = pd.DataFrame(rows); table.to_csv(output / "rq1_rq2_fingerprinting.csv", index=False)
+    from .analysis.stats import fdr_correction
+    table = pd.DataFrame(rows)
+    if "p_value" in table.columns and not table.empty:
+        table["p_value_fdr"] = fdr_correction(table["p_value"].tolist(), alpha=0.05)
+    table.to_csv(output / "rq1_rq2_fingerprinting.csv", index=False)
     log("WP3/WP4 headline analyses complete")
     baselines = []
     for (workload, resolver, protocol), subset in frame.groupby(["workload", "resolver", "protocol"]):

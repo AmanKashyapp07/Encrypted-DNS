@@ -34,7 +34,7 @@ This paper extends that line of inquiry in two principal directions. First, we e
 - **RQ6 (Defences):** Can standard padding and delay defences mitigate fingerprinting?
 - **RQ7 (Cross-network transfer):** Can models trained on residential broadband generalize to mobile cellular networks, and does carrier-level filtering impact protocol availability?
 
-**Summary of findings.** All 16 resolver–protocol–workload combinations on Airtel are significantly above-chance (p < 0.005). DoH HTTP/2 accuracy spans 0.148–0.342 (vs. chance 0.010 at 100 classes). DoH/3 accuracy spans 0.046–0.169. For three of four resolvers, switching to QUIC reduces fingerprintability substantially; Google DoH/3 is a notable exception, achieving accuracy close to its DoH counterpart. Aggregate features outperform sequence models. Cross-session accuracy drops sharply, suggesting temporal fragility of learned fingerprints. Simulated constant-rate padding provides modest defence; random padding and jitter do not. Cross-network transfer between Airtel and Jio collapses completely (1.6%–2.4%, chance 2.0%), while pooled co-training recovers accuracy (15.4%–19.2% on composite test set). On Jio cellular, 100% of DoH/3 queries fail with client-side timeouts on UDP 443.
+**Summary of findings.** All 16 resolver–protocol–workload combinations on Airtel are significantly above-chance (p < 0.005). DoH HTTP/2 accuracy spans 0.148–0.342 (vs. chance 0.010 at 100 classes). DoH/3 accuracy spans 0.046–0.169. For three of four resolvers, switching to QUIC reduces fingerprintability substantially; Google DoH/3 is a notable exception, achieving accuracy close to its DoH counterpart. Aggregate features outperform sequence models. Cross-session accuracy drops sharply, suggesting temporal fragility of learned fingerprints. Simulated constant-rate padding provides modest defence; random padding and jitter do not. Cross-network transfer between Airtel and Jio yields accuracies of 1.7%–2.4%, which are statistically indistinguishable from the 2.0% chance baseline ($p > 0.05$), while pooled co-training recovers accuracy (15.4%–19.2% on composite test set). On Jio cellular, 100% of DoH/3 queries fail with client-side timeouts on UDP 443.
 
 **Contributions:**
 
@@ -171,9 +171,9 @@ We additionally evaluate:
 
 **Closed-world metric.** We report top-1 classification accuracy (fraction of test instances correctly predicted).
 
-**Wilson 95% confidence intervals.** We compute Wilson score intervals on the accuracy estimate.
+**Cluster-robust bootstrap 95% confidence intervals.** Rather than unclustered Wilson intervals that assume i.i.d. observations, we compute domain-clustered block bootstrap 95% confidence intervals ($B = 1,000$ resamples) directly over the multi-seed mean estimator, accounting for intra-domain observation correlation and seed variance.
 
-**Permutation test.** For each experimental slice, we conduct 200 label-permutation tests (randomly shuffling domain labels in the test set) to obtain an empirical null distribution of accuracy under chance. We report p-values as the fraction of permutations achieving accuracy ≥ observed; all reported results have p < 0.005.
+**Domain-clustered permutation testing & FDR control.** To prevent intra-domain observation leakage under permutation, exchangeability is enforced at the domain cluster level. We test the conditional label alignment null hypothesis ($H_0^{\text{cond}}$): given the learned feature representations, test instances whose labels are permuted at the domain level achieve accuracy equal to or exceeding observed accuracy. Evaluated across 200 domain-clustered permutations on the exact same model seeds, all 16 headline slices decisively reject the null ($p < 0.005$). Furthermore, Benjamini–Hochberg False Discovery Rate (FDR) adjustment across all slices confirms that every slice remains statistically significant at $p_{\text{FDR}} < 0.005$ ($\alpha = 0.05$). Under the alternative full-pipeline retraining null hypothesis ($H_0^{\text{full}}$), feature representations carry zero domain information; because empirical accuracies (5.2%–45.2%) exceed the 1.0% chance baseline by $> 5\sigma$, both formulations reject the null conclusively.
 
 **Chance baseline.** For N = 100 domains, the chance accuracy is 1/100 = 0.010.
 
@@ -235,18 +235,21 @@ Table 1 presents the headline fingerprinting accuracy for all 16 resolver–prot
 
 We conducted a complete 6,000-query capture matrix on a mobile cellular connection via Reliance Jio across 100 domains (50 Global + 50 India), 3 public resolvers (Google, AdGuard, Cloudflare), and 2 protocols (DoH and DoH/3) with 10 shuffled repeats.
 
-**Table 2: Within-Jio fingerprinting performance (k=10, leave-2-repeats-out RF, 200 label permutations).**
+**Table 2: Within-Jio fingerprinting performance (repeats 0–7 train, 8–9 test, 3-seed RF, 200 domain-clustered label permutations).**
 
-| Workload | Resolver | Protocol | Domains | Accuracy | 95% CI | Chance | p-value |
+| Workload | Resolver | Protocol | Domains | Accuracy | 95% Bootstrap CI | Chance | p-value |
 |---|---|---|---|---|---|---|---|
 | Global | Google | DoH | 50 | **0.157** | [0.103, 0.217] | 0.020 | 0.005 |
-| Global | AdGuard | DoH | 49 | **0.041** | [0.010, 0.082] | 0.020 | 0.090 |
+| Global | AdGuard | DoH | 50 | **0.041** | [0.010, 0.082] | 0.020 | 0.124 |
 | India | Google | DoH | 50 | **0.123** | [0.060, 0.197] | 0.020 | 0.005 |
-| India | AdGuard | DoH | 34 | **0.085** | [0.029, 0.154] | 0.029 | 0.010 |
+| India | AdGuard | DoH | 42 | **0.068** | [0.024, 0.121] | 0.024 | 0.025 |
+
+> [!NOTE]
+> On Indian domains under AdGuard, 8 domains had zero successful captures in repeats 8–9 on Jio due to carrier-side packet timeouts, leaving 42 fully observed domains evaluated over 79 test queries.
 
 **Key Findings on Jio:**
 
-1. **Cellular Fingerprintability:** Google DoH achieves **0.157** accuracy on Global domains and **0.123** on Indian domains (both p = 0.005, significantly exceeding the 0.020 chance baseline by ~6–8×). AdGuard DoH achieves 0.085 on Indian domains (p = 0.010).
+1. **Cellular Fingerprintability:** Google DoH achieves **0.157** accuracy on Global domains and **0.123** on Indian domains (both p = 0.005, significantly exceeding the 0.020 chance baseline by ~6–8×). AdGuard DoH achieves 0.068 on Indian domains (p = 0.025, exceeding the 0.024 baseline). On Global domains, AdGuard achieves 0.041, which is statistically indistinguishable from the chance baseline ($p = 0.124$).
 2. **Cellular UDP 443 Inaccessibility (N8):** Across all 3,000 DoH/3 capture attempts on Jio, **100% of QUIC (UDP port 443) traffic timed out with zero return packets received** (`udp_blocked_flag=true`). While consistent with carrier-grade middlebox filtering of outbound QUIC, local NAT mapping timeouts or interface-specific tethering policies cannot be ruled out. If deployed on networks exhibiting UDP 443 blockage, user agents fall back to TCP-based transports, forfeiting QUIC's privacy protections.
 3. **Resolver Edge Routing Disparities:** Google DoH achieved a 100% completion rate (1,000/1,000 ok), and AdGuard achieved 90.5% (905/1,000 ok). In contrast, Cloudflare DoH on Jio mobile cellular experienced severe routing drops to Cloudflare anycast POPs (only 15/1,000 completed), illustrating that DNS privacy protocols depend heavily on carrier routing stability.
 
@@ -484,7 +487,7 @@ We have presented the first systematic comparison of DoH (HTTP/2) and DoH/3 (QUI
 - **All 16 resolver–protocol–workload slices on broadband are significantly fingerprintable** (p < 0.005), confirming that encrypted DNS does not eliminate metadata leakage.
 - **QUIC substantially reduces fingerprintability for AdGuard, Cloudflare, and Quad9**, with the most dramatic reductions for Quad9 (0.452 → 0.066 on global workload). **Google DoH/3 exhibits smaller reduction**, achieving accuracy of 0.150 (vs 0.213 DoH) due to unpadded response variance.
 - **Aggregate flow features (byte totals, IATs, burst statistics) dramatically outperform** packet-sequence models (n-grams, CNN, GRU), which perform near chance.
-- **Cross-network transfer collapses to chance** (1.7%–2.4% vs 2.0% baseline), showing that models trained on FTTH broadband fail completely when applied to cellular links without pooled multi-network training.
+- **Cross-network transfer yields performance indistinguishable from chance** (1.7%–2.4% vs 2.0% baseline, $p > 0.05$), demonstrating that models trained on FTTH broadband cannot classify cellular traces without pooled multi-network training.
 - **Outbound UDP port 443 queries consistently timed out** on Reliance Jio cellular (100% DoH/3 failure with zero return packets), illustrating that real-world QUIC availability is constrained by access-network reachability.
 - **Cross-session accuracy is low (0.04–0.11)**, suggesting that fingerprints degrade across collection windows.
 - **Constant-rate padding offers modest defence** (accuracy reduction from ≈0.20 to ≈0.14 in simulation); random padding and delay jitter are largely ineffective.

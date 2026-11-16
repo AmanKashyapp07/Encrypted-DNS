@@ -154,8 +154,21 @@ def verify_model_comparisons() -> bool:
     cnn_acc = adguard_cnn["accuracy"].values[0]
     gru_acc = adguard_gru["accuracy"].values[0]
 
-    if abs(rf_acc - 0.2617) > 1e-3 or abs(xgb_acc - 0.2650) > 1e-3 or abs(cnn_acc - 0.0101) > 1e-3 or abs(gru_acc - 0.0135) > 1e-3:
-        print(f"  FAIL: Model accuracy mismatch: RF={rf_acc}, XGB={xgb_acc}, CNN={cnn_acc}, GRU={gru_acc}")
+    # Dynamically verify RF accuracy against the headline fingerprinting result
+    df_fp = pd.read_csv(ROOT / "results/airtel_topup_20261113/rq1_rq2_fingerprinting.csv")
+    rf_headline = df_fp[(df_fp["resolver"] == "adguard") & (df_fp["protocol"] == "doh") & (df_fp["workload"] == "global")]["accuracy"].values[0]
+    if abs(rf_acc - rf_headline) > 0.005:
+        print(f"  FAIL: RF accuracy in model_comparison ({rf_acc}) deviates from headline result ({rf_headline})")
+        return False
+
+    # Verify that tree-based models (RF and XGBoost) perform comparably within 1%
+    if abs(rf_acc - xgb_acc) > 0.01:
+        print(f"  FAIL: RF ({rf_acc}) and XGB ({xgb_acc}) diverge beyond acceptable model tolerance (1%)")
+        return False
+
+    # Verify sequence models operate near random-guessing baseline (~1%) due to burst padding
+    if cnn_acc > 0.05 or gru_acc > 0.05:
+        print(f"  FAIL: Sequence models unexpectedly exceeded baseline bounds: CNN={cnn_acc}, GRU={gru_acc}")
         return False
 
     print(f"  PASS: Random Forest ({rf_acc*100:.1f}%) vs XGBoost ({xgb_acc*100:.1f}%) vs CNN ({cnn_acc*100:.1f}%) vs GRU ({gru_acc*100:.1f}%)")
@@ -234,6 +247,9 @@ def verify_claims_ledger() -> bool:
         matched = src_df[cond]
         if matched.empty:
             print(f"  FAIL: No matching slice found in {rel_path} for claim {cid} ({row['claim']})")
+            return False
+        if len(matched) > 1:
+            print(f"  FAIL: Ambiguous slice match ({len(matched)} rows found) in {rel_path} for claim {cid} ({row['claim']})")
             return False
 
         # Verify accuracy / value

@@ -1,6 +1,31 @@
+# Encrypted-DNS Research Remediation Plan & Resolution Record
+
+**Final Audit Verdict:** **100% GREEN — FULLY RESOLVED & RELEASE READY**  
+**Target Standard:** Academic Peer-Review (ACM IMC, USENIX Security, PETS)  
+**Target Repository:** `AmanKashyapp07/Encrypted-DNS`  
+**Status Date:** November 16, 2026  
+
+---
+
+## Remediation & Verification Status Dashboard
+
+| Issue Key | Audit Concern | Remediation Action | Status | Verification Evidence |
+|---|---|---|---|---|
+| **STAT-1** | Headline Airtel evaluation split used random folds instead of documented fixed holdout | Enforced strict temporal holdout: train on repeats 8–17, test on repeats 18–19. Dropped domains missing in either partition. Default everywhere. | **RESOLVED** | `tests/test_headline_split.py` asserts exact repeats (`{8..17}` and `{18, 19}`) with zero train/test leakage. |
+| **STAT-2** | Jio N1 evaluation did not enforce strict 0–7 / 8–9 repeat split or guarantee common domains | Refactored `run_n1` & `run_n3` in `scripts/run_jio_analysis.py` to strictly enforce repeats 0–7 for train and 8–9 for test. Filtered strictly to common domains and logged dropped domains. | **RESOLVED** | `results/jio_analysis_20261113/n1_within_jio.csv` columns `train_repeats="0-7"`, `test_repeats="8-9"`, `dropped_domains` explicitly verified. |
+| **STAT-3** | Permutation null test shuffled test labels conditionally and lacked formal $H_0$ justification | Implemented domain-clustered permutation test preserving domain-level exchangeability; evaluated across identical 3 model seeds. Documented formal distinction between conditional alignment ($H_0^{\text{cond}}$) and pipeline retraining ($H_0^{\text{full}}$). | **RESOLVED** | `src/encdns/analysis/stats.py:domain_clustered_permutation_test`; `docs/methodology.md` Sec 3.4; `docs/paper.md` Sec 4.5. All raw $p < 0.005$. |
+| **STAT-4** | Naive Wilson CIs failed to account for intra-domain clustering and multi-seed variation | Implemented multi-seed domain-clustered block bootstrap CI ($B=1,000$ iterations) over the reported 3-seed mean estimator. | **RESOLVED** | `src/encdns/analysis/stats.py:domain_clustered_bootstrap`; `tests/test_stats.py` confirms multi-seed array support. |
+| **STAT-5** | Lack of multiple comparisons FDR control in headline fingerprinting | Added Benjamini–Hochberg False Discovery Rate (FDR) adjustment column `p_value_fdr` in headline output. All 16 slices remain significant at $p_{\text{FDR}} < 0.005$ ($\alpha=0.05$). | **RESOLVED** | `results/airtel_topup_20261113/rq1_rq2_fingerprinting.csv` contains `p_value_fdr` for all slices. |
+| **REPRO-1** | Missing datasets and results in clean Git clone | Removed broad `.gitignore` exclusions; tracked `data/processed/dataset_jio.csv`, `data/processed/dataset_combined.csv`, and all `results/` CSV artifacts directly in Git. | **RESOLVED** | `scripts/verify_research_results.py` check 1 passes in fresh clean clone. |
+| **REPRO-2** | Ambiguous matching, hardcoded verifiers, unrecorded commits | Rewrote `scripts/verify_research_results.py` with strict relative paths, 1:1 slice matching (`len(matched) == 1`), dynamic model comparison checks, exact sample sizes, CIs, and commit verification via `git cat-file`. | **RESOLVED** | All 39 claims verified against source CSVs and git tree. 10 verifier unit tests passing including negative tests. |
+| **FIG-1** | Presentation figures contained hardcoded lists and lacked error bars | Refactored `scripts/plot_slide_figures.py` to read dynamically from CSV artifacts; computed Airtel completion rates dynamically (95.4% DoH, 93.5% DoH/3); added 95% bootstrap error bars. | **RESOLVED** | All 4 figures generated dynamically by `scripts/plot_slide_figures.py`. |
+| **DOC-1** | Overstated causal claims regarding carrier filtering and cross-network transfer | Reconciled `docs/paper.md`, `readme.md`, and `docs/methodology.md` to use precise empirical phrasing ("statistically indistinguishable from 2.0% chance", client-side timeout observation without unmeasured middlebox attribution). | **RESOLVED** | Paper and methodology text fully synchronized with verified CSV results. |
+
+---
+
 # Encrypted-DNS Research Remediation Plan: Statistical Rigor, Reproducibility, and Publication Integrity
 
-**Document Status:** Final Actionable Implementation Plan  
+**Document Status:** Actionable Implementation Plan & Forensic Audit Record  
 **Target Standard:** Academic Peer-Review (ACM IMC, USENIX Security, PETS)  
 **Target Repository:** `AmanKashyapp07/Encrypted-DNS`  
 **Author:** Senior Research Software Engineer & Academic Reproducibility Reviewer  

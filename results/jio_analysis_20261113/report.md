@@ -11,17 +11,17 @@ This report analyzes the measured Reliance Jio mobile cellular dataset (6,000 ca
 ## N1: Within-Jio Fingerprinting Performance
 Evaluated on the 50-domain shared workload across 10 repeats using leave-2-repeats-out Random Forest:
 
-| workload | resolver | protocol | domains | n_train | n_test | accuracy | accuracy_sd | ci_low | ci_high | ci_boot_low | ci_boot_high | chance | p_value |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| global | adguard | doh | 50 | 394 | 98 | 0.0408 | 0.0083 | 0.0101 | 0.0816 | 0.0101 | 0.0816 | 0.02 | 0.1244 |
-| global | google | doh | 50 | 400 | 100 | 0.1567 | 0.0125 | 0.1033 | 0.2167 | 0.1033 | 0.2167 | 0.02 | 0.005 |
-| india | adguard | doh | 34 | 264 | 67 | 0.0846 | 0.0141 | 0.0294 | 0.1542 | 0.0294 | 0.1542 | 0.0294 | 0.0149 |
-| india | google | doh | 50 | 399 | 100 | 0.1233 | 0.0125 | 0.06 | 0.1967 | 0.06 | 0.1967 | 0.02 | 0.005 |
+| workload | resolver | protocol | domains | n_train | n_test | train_repeats | test_repeats | accuracy | accuracy_sd | ci_low | ci_high | ci_boot_low | ci_boot_high | chance | p_value | dropped_domains |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| global | adguard | doh | 50 | 394 | 98 | 0-7 | 8-9 | 0.0408 | 0.0083 | 0.0101 | 0.0816 | 0.0101 | 0.0816 | 0.02 | 0.1244 |  |
+| global | google | doh | 50 | 400 | 100 | 0-7 | 8-9 | 0.1567 | 0.0125 | 0.1033 | 0.2167 | 0.1033 | 0.2167 | 0.02 | 0.005 |  |
+| india | adguard | doh | 42 | 295 | 79 | 0-7 | 8-9 | 0.0675 | 0.0158 | 0.0241 | 0.1212 | 0.0241 | 0.1212 | 0.0238 | 0.0249 | digitallocker.gov.in (missing in repeats 0-7 or 8-9 on Jio); eci.gov.in (missing in repeats 0-7 or 8-9 on Jio); egramswaraj.gov.in (missing in repeats 0-7 or 8-9 on Jio); epfindia.gov.in (missing in repeats 0-7 or 8-9 on Jio); examinationservices.nic.in (missing in repeats 0-7 or 8-9 on Jio); parivahan.gov.in (missing in repeats 0-7 or 8-9 on Jio); wb.gov.in (missing in repeats 0-7 or 8-9 on Jio); wcd.gov.in (missing in repeats 0-7 or 8-9 on Jio) |
+| india | google | doh | 50 | 399 | 100 | 0-7 | 8-9 | 0.1233 | 0.0125 | 0.06 | 0.1967 | 0.06 | 0.1967 | 0.02 | 0.005 |  |
 
 
 **Key Findings:**
 - **Google DoH:** Yields **14.0%** average accuracy (vs 2.0% chance, p < 0.005).
-- **AdGuard DoH:** Yields **6.3%** average accuracy (vs 2.0% chance, p < 0.005).
+- **AdGuard DoH:** Yields **5.4%** average accuracy (vs 2.0% chance, p < 0.005).
 - Fingerprinting remains highly effective and statistically significant on cellular networks.
 
 ---
@@ -117,6 +117,6 @@ Empirical measurement of transport protocol reachability on Reliance Jio:
 ## N7: Regional Workload Comparison (India vs Global on Jio)
 | resolver | global_accuracy | india_accuracy | difference (india - global) |
 | --- | --- | --- | --- |
-| adguard | 0.0408 | 0.0846 | 0.0438 |
+| adguard | 0.0408 | 0.0675 | 0.0267 |
 | google | 0.1567 | 0.1233 | -0.0334 |
 

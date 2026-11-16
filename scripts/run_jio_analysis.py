@@ -79,20 +79,30 @@ def rf_model(seed: int, n_estimators: int = 100) -> RandomForestClassifier:
 
 # --- N1: Within-Jio Fingerprinting ---
 def run_n1(df_jio: pd.DataFrame, out: Path, n_perm: int = 200) -> pd.DataFrame:
-    print("[N1] Running within-Jio fingerprinting...")
+    print("[N1] Running within-Jio fingerprinting (strict repeats 0-7 train, 8-9 test)...")
     rows = []
     for (wl, res, proto), group in df_jio.groupby(["workload", "resolver", "protocol"]):
-        # Retain domains with >= 8 repeats
-        counts = group.groupby("domain")["repeat"].nunique()
-        domains = sorted(counts[counts >= 8].index)
-        if len(domains) < 5:
-            continue
-        sub = group[group["domain"].isin(domains)].copy()
-        repeats = sorted(sub["repeat"].unique())
+        # Strict Jio Protocol: train on repeats 0-7, test on repeats 8-9
+        train_raw = group[group["repeat"].between(0, 7)].copy()
+        test_raw = group[group["repeat"].between(8, 9)].copy()
         
-        # Leave-2-repeats-out (train on reps[:-2], test on reps[-2:])
-        train = sub[sub["repeat"].isin(repeats[:-2])]
-        test = sub[sub["repeat"].isin(repeats[-2:])]
+        # Explicitly enforce that every test domain is represented in training
+        train_domains = set(train_raw["domain"].unique())
+        test_domains = set(test_raw["domain"].unique())
+        common_domains = sorted(train_domains & test_domains)
+        
+        all_domains = sorted(group["domain"].unique())
+        dropped = {
+            str(d): "missing in repeats 0-7 or 8-9 on Jio"
+            for d in all_domains
+            if d not in common_domains
+        }
+        
+        if len(common_domains) < 5:
+            continue
+            
+        train = train_raw[train_raw["domain"].isin(common_domains)].copy()
+        test = test_raw[test_raw["domain"].isin(common_domains)].copy()
         
         if train.empty or test.empty:
             continue
@@ -114,7 +124,7 @@ def run_n1(df_jio: pd.DataFrame, out: Path, n_perm: int = 200) -> pd.DataFrame:
         boot_lo, boot_hi = domain_clustered_bootstrap(
             test_y, seed_preds_arr, test_y, n_bootstraps=1000, seed=42
         )
-        chance = 1.0 / len(domains)
+        chance = 1.0 / len(common_domains)
         
         # Domain-clustered permutation test evaluated identically on the 3 seeds
         p_val, _ = domain_clustered_permutation_test(
@@ -123,11 +133,13 @@ def run_n1(df_jio: pd.DataFrame, out: Path, n_perm: int = 200) -> pd.DataFrame:
         
         rows.append({
             "workload": wl, "resolver": res, "protocol": proto,
-            "domains": len(domains), "n_train": len(train), "n_test": len(test),
+            "domains": len(common_domains), "n_train": len(train), "n_test": len(test),
+            "train_repeats": "0-7", "test_repeats": "8-9",
             "accuracy": round(mean_acc, 4), "accuracy_sd": round(float(np.std(seed_scores)), 4),
             "ci_low": round(boot_lo, 4), "ci_high": round(boot_hi, 4),
             "ci_boot_low": round(boot_lo, 4), "ci_boot_high": round(boot_hi, 4),
             "chance": round(chance, 4), "p_value": round(p_val, 4),
+            "dropped_domains": "; ".join(f"{d} ({r})" for d, r in sorted(dropped.items())),
         })
     res_df = pd.DataFrame(rows)
     res_df.to_csv(out / "n1_within_jio.csv", index=False)
@@ -208,14 +220,11 @@ def run_n3(df_airtel: pd.DataFrame, df_jio: pd.DataFrame, out: Path) -> pd.DataF
             a_clean = a_sub[a_sub["domain"].isin(shared)].copy()
             j_clean = j_sub[j_sub["domain"].isin(shared)].copy()
             
-            # Split both into 80% train, 20% test (by repeat)
-            a_reps = sorted(a_clean["repeat"].unique())
-            j_reps = sorted(j_clean["repeat"].unique())
-            
-            a_tr = a_clean[a_clean["repeat"].isin(a_reps[:-2])]
-            a_te = a_clean[a_clean["repeat"].isin(a_reps[-2:])]
-            j_tr = j_clean[j_clean["repeat"].isin(j_reps[:-2])]
-            j_te = j_clean[j_clean["repeat"].isin(j_reps[-2:])]
+            # Strict multi-network split: Airtel train 8-17, test 18-19; Jio train 0-7, test 8-9
+            a_tr = a_clean[a_clean["repeat"].between(8, 17)]
+            a_te = a_clean[a_clean["repeat"].between(18, 19)]
+            j_tr = j_clean[j_clean["repeat"].between(0, 7)]
+            j_te = j_clean[j_clean["repeat"].between(8, 9)]
             
             # Pooled train
             pooled_tr = pd.concat([a_tr, j_tr], ignore_index=True)
