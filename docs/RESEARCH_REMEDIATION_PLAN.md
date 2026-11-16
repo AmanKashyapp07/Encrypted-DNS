@@ -1,13 +1,15 @@
 # Encrypted-DNS Research Remediation Plan & Resolution Record
 
-**Audit Status:** **METHODOLOGICALLY GROUNDED & STATISTICALLY DEFENSIBLE**  
+**Current Status:** **POST-REMEDIATION AUDIT RECORD — ALL FINDINGS ADDRESSED**  
 **Target Standard:** Academic Peer-Review (ACM IMC, USENIX Security, PETS)  
 **Target Repository:** `AmanKashyapp07/Encrypted-DNS`  
 **Status Date:** November 16, 2026  
 
 ---
 
-## Remediation & Verification Status Dashboard
+## Part I: Post-Remediation Verification & Resolution Dashboard
+
+The table below summarizes the resolution status for each issue identified in the initial forensic audit. Every remediation action has been implemented, validated by automated unit tests, and verified against empirical CSV artifacts.
 
 | Issue Key | Audit Concern | Remediation Action | Status | Verification Evidence |
 |---|---|---|---|---|
@@ -19,21 +21,16 @@
 | **REPRO-1** | Missing datasets and results in clean Git clone | Removed broad `.gitignore` exclusions; tracked `data/processed/dataset_jio.csv`, `data/processed/dataset_combined.csv`, and all `results/` CSV artifacts directly in Git. | **RESOLVED** | `scripts/verify_research_results.py` check 1 passes in fresh clean clone. |
 | **REPRO-2** | Verifier gaps: ambiguous matches, unverified model rows, limited negative tests | Rewrote `scripts/verify_research_results.py` with strict 1:1 slice matching (`len(matched) == 1`), unique model comparison matching, and 13 unit tests including 7 negative tests (corrupted values, invalid SHA, malformed SHA, missing columns, ambiguous matches, corrupted CI bounds, duplicate model rows). Clearly documented as a numerical/provenance consistency checker. | **RESOLVED** | All 39 claims verified against source CSVs and git tree. 13 verifier unit tests passing. |
 | **FIG-1** | Presentation figures contained hardcoded lists and silent fallbacks | Refactored `scripts/plot_slide_figures.py` to read dynamically from CSV artifacts; computed Airtel completion rates dynamically from manifest; removed silent fallback (raises `FileNotFoundError` if manifest missing); added 95% bootstrap error bars. | **RESOLVED** | All 4 figures generated dynamically by `scripts/plot_slide_figures.py` without fallback values. |
-| **DOC-1** | Overstated causal claims, unmeasured fallback assertions, and terminology mismatches | Reconciled `docs/paper.md`, `readme.md`, and `docs/methodology.md`: replaced "complete failure" with "statistically indistinguishable from 2.0% chance", removed unmeasured TCP fallback assertions, synchronized temporal holdout terminology, and replaced all Wilson CI references with bootstrap CIs. | **RESOLVED** | Paper, README, and methodology text fully synchronized with verified CSV results and measured phenomena. |
+| **DOC-1** | Overstated causal claims, unmeasured fallback assertions, and terminology mismatches | Reconciled `docs/paper.md`, `readme.md`, and `docs/methodology.md`: replaced "complete failure" with observational framing (confidence intervals spanning chance), removed unmeasured TCP fallback assertions, synchronized temporal holdout terminology, and replaced all Wilson CI references with bootstrap CIs. | **RESOLVED** | Paper, README, and methodology text fully synchronized with verified CSV results and measured phenomena. |
 
 ---
 
-# Encrypted-DNS Research Remediation Plan: Statistical Rigor, Reproducibility, and Publication Integrity
+## Part II: Historical Forensic Audit Report (Pre-Remediation Baseline)
 
-**Document Status:** Actionable Implementation Plan & Forensic Audit Record  
-**Target Standard:** Academic Peer-Review (ACM IMC, USENIX Security, PETS)  
-**Target Repository:** `AmanKashyapp07/Encrypted-DNS`  
-**Author:** Senior Research Software Engineer & Academic Reproducibility Reviewer  
-**Date:** November 16, 2026  
+> [!IMPORTANT]
+> **Historical Record Notice:** The findings detailed in this section describe the baseline repository state identified during the initial forensic audit prior to remediation. For the current, verified, and remediated status of each finding, refer to the **Remediation & Verification Status Dashboard** in Part I above.
 
----
-
-## 1. Executive Summary
+### 1. Executive Summary (Historical Baseline)
 
 This document presents a comprehensive, evidence-based remediation plan for the `Encrypted-DNS` research repository. The project studies privacy leakage and website fingerprinting resistance in encrypted DNS traffic, comparing DNS-over-HTTPS (DoH, HTTP/2) and DNS-over-HTTP/3 (DoH/3, QUIC) across residential broadband (Airtel FTTH) and mobile cellular (Reliance Jio) access networks.
 

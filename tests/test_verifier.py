@@ -134,6 +134,19 @@ class TestResearchVerifier(unittest.TestCase):
         with patch("scripts.verify_research_results.pd.read_csv", side_effect=mock_read_csv):
             self.assertFalse(verify_model_comparisons())
 
+    def test_negative_duplicate_rf_headline_rejected(self):
+        """Verifier must reject model comparison if headline fingerprinting output has duplicate rows."""
+        real_fp = _ORIG_READ_CSV(ROOT / "results/airtel_topup_20261113/rq1_rq2_fingerprinting.csv")
+        corrupted_fp = pd.concat([real_fp, real_fp.iloc[[0]]], ignore_index=True)
+
+        def mock_read_csv(path, *args, **kwargs):
+            if "rq1_rq2_fingerprinting.csv" in str(path):
+                return corrupted_fp.copy()
+            return _ORIG_READ_CSV(path, *args, **kwargs)
+
+        with patch("scripts.verify_research_results.pd.read_csv", side_effect=mock_read_csv):
+            self.assertFalse(verify_model_comparisons())
+
 
 if __name__ == "__main__":
     unittest.main()

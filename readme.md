@@ -51,7 +51,7 @@ An on-path passive adversary (such as an ISP or local network observer) can trai
 
 1. **Protocol Framing Reduces Leakage on Most Resolvers:** On Cloudflare, Quad9, and AdGuard, HTTP/3 significantly suppresses fingerprintability (leakage reduced by 57% to 85%). QUIC's mandatory Initial packet padding ($\ge 1200$ bytes) and unified frame multiplexing act as natural padding against query-length leakage.
 2. **The Google Anomaly (Implementation Outweighs Protocol):** Google DoH/3 exhibits smaller privacy gains (15.0% vs. 21.3%). Packet inspection revealed that Google returns unpadded response payloads where downstream packet size variations strongly correlate with the number of DNS resource records in the answer section, preserving distinct packet-size signatures.
-3. **Cross-Network Generalization Failure:** Classifiers trained on fiber broadband (Airtel) do not generalize when deployed against cellular traffic (Jio), yielding **1.7%–2.4%** accuracy, which is statistically indistinguishable from the 2.0% random chance baseline for the 50 shared domains ($p > 0.05$). Two-sample Kolmogorov-Smirnov tests confirm major distribution shifts ($p < 10^{-6}$) in flow sizes and inter-arrival times across access networks.
+3. **Cross-Network Generalization Failure:** Classifiers trained on fiber broadband (Airtel) do not generalize when deployed against cellular traffic (Jio): cross-network transfer accuracy remains close to the 2.0% random chance baseline (1.7%–2.4% across 50 shared domains), with domain-clustered confidence intervals spanning the baseline in all evaluated slices. Two-sample Kolmogorov-Smirnov tests confirm major distribution shifts ($p < 10^{-6}$) in flow sizes and inter-arrival times across access networks.
 4. **Cellular UDP/443 Inaccessibility:** On Reliance Jio cellular, **100% of the 3,000 DoH/3 queries timed out** with 0 packets returned. Observations demonstrate consistent client-side timeouts on outbound UDP port 443 on the cellular test link, whereas DoH (TCP/TLS) queries succeeded. While standard dual-stack clients may fall back to TCP transports when UDP is unreachable, such fallback behavior was not experimentally measured here.
 
 ---
@@ -110,7 +110,7 @@ An on-path passive adversary (such as an ISP or local network observer) can trai
 ## 6. Testing and Reproducibility
 
 ```bash
-# Execute automated test suite (30 tests pass)
+# Execute automated test suite (31 tests pass)
 python3 -m unittest discover tests
 ```
 

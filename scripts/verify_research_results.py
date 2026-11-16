@@ -166,7 +166,11 @@ def verify_model_comparisons() -> bool:
 
     # Dynamically verify RF accuracy against the headline fingerprinting result
     df_fp = pd.read_csv(ROOT / "results/airtel_topup_20261113/rq1_rq2_fingerprinting.csv")
-    rf_headline = df_fp[(df_fp["resolver"] == "adguard") & (df_fp["protocol"] == "doh") & (df_fp["workload"] == "global")]["accuracy"].values[0]
+    rf_headline_rows = df_fp[(df_fp["resolver"] == "adguard") & (df_fp["protocol"] == "doh") & (df_fp["workload"] == "global")]
+    if len(rf_headline_rows) != 1:
+        print(f"  FAIL: Expected exactly 1 headline match for AdGuard DoH Global in rq1_rq2_fingerprinting.csv; found {len(rf_headline_rows)}")
+        return False
+    rf_headline = rf_headline_rows["accuracy"].values[0]
     if abs(rf_acc - rf_headline) > 0.005:
         print(f"  FAIL: RF accuracy in model_comparison ({rf_acc}) deviates from headline result ({rf_headline})")
         return False
@@ -301,7 +305,7 @@ def verify_claims_ledger() -> bool:
 
         verified_claims += 1
 
-    print(f"  PASS: All {verified_claims} claims verified with exact numerical values, sample sizes, CIs, and git provenance!")
+    print(f"  PASS: All {verified_claims} claims verified within tolerances (accuracy ±0.005, CIs ±0.01), sample sizes, and git commit history!")
     return True
 
 
