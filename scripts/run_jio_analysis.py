@@ -388,6 +388,20 @@ def generate_report(out: Path, n1: pd.DataFrame, n2: pd.DataFrame, n3: pd.DataFr
         body = "\n".join("| " + " | ".join(str(v) for v in row) + " |" for row in sub.itertuples(index=False))
         return f"{hdr}\n{sep}\n{body}\n"
 
+    n1_bullets = []
+    for _, r in n1.iterrows():
+        wl = str(r["workload"]).capitalize()
+        res = str(r["resolver"]).capitalize()
+        acc = float(r["accuracy"]) * 100
+        pval = float(r["p_value"])
+        chance = float(r["chance"]) * 100
+        n_test = int(r["n_test"])
+        if pval < 0.05:
+            n1_bullets.append(f"- **{res} DoH ({wl}):** Achieves **{acc:.1f}%** accuracy (vs {chance:.1f}% chance, n_test={n_test}), statistically significant (p = {pval:.4f}).")
+        else:
+            n1_bullets.append(f"- **{res} DoH ({wl}):** Achieves **{acc:.1f}%** accuracy (vs {chance:.1f}% chance, n_test={n_test}), not statistically distinguishable from chance (p = {pval:.4f}).")
+    n1_findings_str = "\n".join(n1_bullets)
+
     report = f"""# Jio and Cross-Network Empirical Findings (N1–N8)
 
 Generated: {date.today()}
@@ -399,14 +413,14 @@ This report analyzes the measured Reliance Jio mobile cellular dataset (6,000 ca
 ---
 
 ## N1: Within-Jio Fingerprinting Performance
-Evaluated on the 50-domain shared workload across 10 repeats using leave-2-repeats-out Random Forest:
+Evaluated using repeat-range temporal partition (repeats 0–7 train, 8–9 test, 3-seed Random Forest):
 
 {md_table(n1)}
 
 **Key Findings:**
-- **Google DoH:** Yields **{n1[n1['resolver']=='google']['accuracy'].mean():.1%}** average accuracy (vs {n1['chance'].values[0]:.1%} chance, p < 0.005).
-- **AdGuard DoH:** Yields **{n1[n1['resolver']=='adguard']['accuracy'].mean():.1%}** average accuracy (vs {n1['chance'].values[0]:.1%} chance, p < 0.005).
-- Fingerprinting remains highly effective and statistically significant on cellular networks.
+{n1_findings_str}
+- Google DoH remains statistically significant above chance across both workloads (p = 0.005).
+- AdGuard DoH achieves statistical significance on the India workload (p = 0.0249, 42 domains), while on the Global workload it is not statistically distinguishable from the 2.0% chance baseline (p = 0.1244).
 
 ---
 
@@ -416,8 +430,8 @@ Evaluating whether an attacker trained on Airtel can fingerprint victims on Jio,
 {md_table(n2)}
 
 **Key Findings:**
-- **Cross-network transfer drops significantly towards chance level**, demonstrating that models trained on one carrier do NOT generalize out-of-the-box to another carrier without domain adaptation.
-- Network-specific routing, packet aggregation, and cellular latency shift the traffic silhouette.
+- **Cross-network transfer accuracy drops close to chance level (1.7%–2.4% vs 2.0% baseline)**, with domain-clustered bootstrap confidence intervals spanning chance across all evaluated slices.
+- Models trained on fixed broadband do not generalize to cellular traffic without multi-network training.
 
 ---
 
@@ -441,13 +455,13 @@ Top 10 features showing the largest distribution shift between Airtel and Jio (K
 
 ---
 
-## N6 & N8: Network Health & Carrier Blocking
+## N6 & N8: Network Health & Protocol Availability
 Empirical measurement of transport protocol reachability on Reliance Jio:
 
 {md_table(n8)}
 
 **Key Findings:**
-- **DoH/3 (UDP 443 / QUIC) is 100% BLOCKED:** Jio cellular actively drops outbound UDP on port 443. All 3,000 DoH/3 queries failed across Cloudflare, Google, and AdGuard (`udp_blocked_flag=true`).
+- **DoH/3 (UDP 443 / QUIC) Inaccessibility:** All 3,000 DoH/3 queries timed out on UDP port 443 across Cloudflare, Google, and AdGuard (`udp_blocked_flag=true`, 0.0% completion rate), documenting client-side QUIC timeouts on the tested cellular link.
 - **Cloudflare DoH Edge Routing:** Cloudflare DoH on Jio mobile cellular exhibited a 98.5% drop rate due to cellular route instability to Cloudflare's anycast POPs.
 - **Google DoH:** 100% reliable (1,000/1,000 ok) with mean latency of ~170ms.
 - **AdGuard DoH:** 90.5% reliable (905/1,000 ok) with mean latency of ~210ms.

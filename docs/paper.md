@@ -38,11 +38,11 @@ This paper extends that line of inquiry in two principal directions. First, we e
 
 **Contributions:**
 
-1. The first systematic comparison of DoH (HTTP/2) vs. DoH/3 (QUIC) fingerprintability across four public resolvers, two domain workloads, and two physical Indian access networks (Airtel FTTH and Jio cellular).
-2. A verified dataset of 20,838 usable, feature-labelled DNS flow traces extracted from 26,262 raw capture attempts.
-3. Empirical evidence that QUIC's connection multiplexing and packet-structure differences affect fingerprintability in resolver-specific ways (the Google anomaly).
-4. Measurement of cross-network transfer collapse and feature distribution shifts (Kolmogorov-Smirnov $p < 10^{-6}$), demonstrating that broadband fingerprints do not transfer to cellular links without pooled training.
-5. In-situ observation of client-side QUIC timeouts on Reliance Jio cellular, documenting real-world barriers to DoH/3 deployment.
+1. A comparative empirical measurement of DoH (HTTP/2) vs. DoH/3 (QUIC) fingerprintability across four public resolvers and two domain workloads on residential broadband (Airtel FTTH).
+2. A verified dataset of 20,838 usable, feature-labelled DNS flow traces extracted from 26,262 raw capture attempts across fixed broadband and mobile cellular networks.
+3. Empirical evidence that observed QUIC fingerprintability differs in resolver-specific ways (the Google anomaly), where unpadded answer records modulate metadata leakage.
+4. Measurement of cross-network transfer failure and feature distribution shifts (Kolmogorov-Smirnov $p < 10^{-6}$), demonstrating that broadband fingerprints do not transfer to cellular links without pooled multi-network training.
+5. In-situ observation of client-side QUIC timeouts on Reliance Jio cellular (100% timeouts on UDP port 443), documenting real-world transport accessibility constraints for DoH/3.
 6. Evaluation of classical WF defences via feature-vector simulation, showing that only constant-rate padding offers meaningful (though modest) protection.
 
 The remainder of this paper is structured as follows. Section 2 reviews related work. Section 3 describes our threat model. Section 4 details our methodology. Section 5 presents empirical results across both Airtel broadband and Jio cellular, including cross-network transfer and pooled training. Section 6 discusses implications. Section 7 states limitations. Section 8 addresses ethics and reproducibility. Section 9 concludes.
@@ -193,7 +193,7 @@ We additionally evaluate:
 
 Table 1 presents the headline fingerprinting accuracy for all 16 resolver–protocol–workload slices. All results are significant at p < 0.005 (200-permutation test). Chance accuracy at 100 classes is 0.010.
 
-**Table 1: Headline closed-world fingerprinting accuracy (Airtel, k=10, leave-repeat-out). All p < 0.005.**
+**Table 1: Headline closed-world fingerprinting accuracy (Airtel broadband, k=10, fixed temporal holdout: repeats 8–17 train, 18–19 test). All p < 0.005.**
 
 | Resolver   | Protocol | Workload | Accuracy | 95% CI          | Chance |
 |------------|----------|----------|----------|-----------------|--------|
@@ -422,7 +422,7 @@ The consistent superiority of aggregate RF features over sequence models has an 
 
 ### 6.4 Implications for Privacy Standards
 
-Our results have implications for the ongoing standardisation and deployment of encrypted DNS. The EDNS0 padding option (RFC 7830) is specified precisely to mitigate DNS fingerprinting by padding queries and responses to fixed block sizes. The absence of EDNS0 padding in our live checks suggests that none of the four evaluated resolvers currently enables it in their DoH or DoH/3 deployments (at least as observed from our vantage point). Our simulated results suggest that constant-rate padding would meaningfully reduce (though not eliminate) fingerprinting accuracy. Enabling EDNS0 padding — or implementing Oblivious DNS-over-HTTPS (ODoH) — would be a practical mitigation.
+Our results have implications for the ongoing standardisation and deployment of encrypted DNS. The EDNS0 padding option (RFC 7830) is specified precisely to mitigate DNS fingerprinting by padding queries and responses to fixed block sizes. In our client diagnostic checks, EDNS0 padding options were not observed in the parsed response metadata of the four evaluated resolvers. While wire-level padding cannot be conclusively ruled out without server-side instrumentation or decrypted payload inspection, our empirical flow-size variations indicate that responses exhibit domain-distinguishable byte distributions in production. Our simulated results suggest that constant-rate padding would meaningfully reduce (though not eliminate) fingerprinting accuracy. Enabling EDNS0 padding — or implementing Oblivious DNS-over-HTTPS (ODoH) — would be a practical mitigation.
 
 ### 6.5 Indian ISP Context
 
@@ -470,7 +470,7 @@ We identify the following limitations of this study:
 
 ### 8.2 Reproducibility
 
-**Code and data.** We will release the feature extraction scripts, classifier code, and the `dataset_v2.csv` feature dataset (with salted machine IDs) upon publication. PCAPs will not be released due to privacy considerations (they may contain residual metadata beyond the extracted features).
+**Code and data.** All feature extraction scripts, classifier pipelines, research verifiers, and preprocessed feature datasets (`dataset_v2.csv`, `dataset_jio.csv`, `dataset_combined.csv`) are version-controlled and included directly in the repository under `data/processed/`. Raw PCAPs are retained privately due to potential residual payload leakage.
 
 **Configuration.** We document the exact tool versions (`q` v0.19.12), resolver endpoints, domain lists, feature extraction logic, classifier hyperparameters, evaluation split, and permutation test parameters to enable reproduction of results.
 
@@ -482,16 +482,16 @@ We identify the following limitations of this study:
 
 ## 9. Conclusion
 
-We have presented the first systematic comparison of DoH (HTTP/2) and DoH/3 (QUIC) fingerprintability across four public resolvers, two domain workloads, and two physical Indian access networks (Airtel FTTH and Reliance Jio cellular). Using Random Forest classification on 44 packet-level and flow-level metadata features, with rigorous leave-repeat-out evaluation and permutation-test significance analysis, we find:
+We have presented a comparative empirical measurement of DoH (HTTP/2) and DoH/3 (QUIC) fingerprintability across four public resolvers, two domain workloads, and two physical Indian access networks (Airtel FTTH and Reliance Jio cellular). Evaluating Random Forest classification on 44 packet-level and flow-level metadata features, with strict temporal holdout evaluation and domain-clustered permutation significance testing, we find:
 
 - **All 16 resolver–protocol–workload slices on broadband are significantly fingerprintable** (p < 0.005), confirming that encrypted DNS does not eliminate metadata leakage.
-- **QUIC substantially reduces fingerprintability for AdGuard, Cloudflare, and Quad9**, with the most dramatic reductions for Quad9 (0.452 → 0.066 on global workload). **Google DoH/3 exhibits smaller reduction**, achieving accuracy of 0.150 (vs 0.213 DoH) due to unpadded response variance.
+- **DoH/3 showed lower observed fingerprinting accuracy than DoH for AdGuard, Cloudflare, and Quad9**, with the largest observed relative drop on Quad9 (0.452 → 0.066 on global workload). **Google DoH/3 exhibited a smaller reduction**, achieving accuracy of 0.150 (vs 0.213 DoH) due to unpadded response variance.
 - **Aggregate flow features (byte totals, IATs, burst statistics) dramatically outperform** packet-sequence models (n-grams, CNN, GRU), which perform near chance.
 - **Cross-network transfer accuracy remained close to chance** (1.7%–2.4% vs 2.0% baseline), with domain-clustered 95% bootstrap confidence intervals spanning the baseline across evaluated slices, demonstrating that models trained on FTTH broadband do not generalize to cellular traces without pooled multi-network training.
 - **Outbound UDP port 443 queries consistently timed out** on Reliance Jio cellular (100% DoH/3 failure with zero return packets), illustrating that real-world QUIC availability is constrained by access-network reachability.
 - **Cross-session accuracy is low (0.04–0.11)**, suggesting that fingerprints degrade across collection windows.
 - **Constant-rate padding offers modest defence** (accuracy reduction from ≈0.20 to ≈0.14 in simulation); random padding and delay jitter are largely ineffective.
-- **EDNS0 padding was not observed** in client diagnostics of any of the four evaluated resolvers, leaving deployed DoH/DoH/3 flows undefended against size-based analysis.
+- **EDNS0 padding was not observed in client diagnostic outputs** across the four evaluated resolvers; while wire-level padding cannot be conclusively ruled out without server-side instrumentation or decrypted payload inspection, our empirical flow-size variations indicate that responses exhibit domain-distinguishable byte distributions in production.
 
 These findings underscore the need for resolver-side padding (EDNS0 padding option or equivalent) and motivate further investigation of Oblivious DoH as a stronger privacy primitive. Future work will investigate browser-level linkability, cascading DNS lookups, and real-world padding deployments.
 

@@ -1,7 +1,7 @@
 # Jio and Cross-Network Empirical Findings (N1–N8)
 
 Generated: 2026-11-16
-Analysis Directory: `/Users/amankashyap/Documents/DNS-Analysis/results/jio_analysis_20261113`
+Analysis Directory: `results/jio_analysis_20261113`
 
 ## Executive Summary
 This report analyzes the measured Reliance Jio mobile cellular dataset (6,000 captures across 100 domains, 3 resolvers, and 2 protocols) and evaluates cross-network transfer between Airtel (broadband) and Jio (cellular).
@@ -9,20 +9,23 @@ This report analyzes the measured Reliance Jio mobile cellular dataset (6,000 ca
 ---
 
 ## N1: Within-Jio Fingerprinting Performance
-Evaluated on the 50-domain shared workload across 10 repeats using leave-2-repeats-out Random Forest:
+Evaluated using repeat-range temporal partition (repeats 0–7 train, 8–9 test, 3-seed Random Forest):
 
 | workload | resolver | protocol | domains | n_train | n_test | train_repeats | test_repeats | accuracy | accuracy_sd | ci_low | ci_high | ci_boot_low | ci_boot_high | chance | p_value | dropped_domains |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| global | adguard | doh | 50 | 394 | 98 | 0-7 | 8-9 | 0.0408 | 0.0083 | 0.0101 | 0.0816 | 0.0101 | 0.0816 | 0.02 | 0.1244 |  |
-| global | google | doh | 50 | 400 | 100 | 0-7 | 8-9 | 0.1567 | 0.0125 | 0.1033 | 0.2167 | 0.1033 | 0.2167 | 0.02 | 0.005 |  |
+| global | adguard | doh | 50 | 394 | 98 | 0-7 | 8-9 | 0.0408 | 0.0083 | 0.0101 | 0.0816 | 0.0101 | 0.0816 | 0.02 | 0.1244 | nan |
+| global | google | doh | 50 | 400 | 100 | 0-7 | 8-9 | 0.1567 | 0.0125 | 0.1033 | 0.2167 | 0.1033 | 0.2167 | 0.02 | 0.005 | nan |
 | india | adguard | doh | 42 | 295 | 79 | 0-7 | 8-9 | 0.0675 | 0.0158 | 0.0241 | 0.1212 | 0.0241 | 0.1212 | 0.0238 | 0.0249 | digitallocker.gov.in (missing in repeats 0-7 or 8-9 on Jio); eci.gov.in (missing in repeats 0-7 or 8-9 on Jio); egramswaraj.gov.in (missing in repeats 0-7 or 8-9 on Jio); epfindia.gov.in (missing in repeats 0-7 or 8-9 on Jio); examinationservices.nic.in (missing in repeats 0-7 or 8-9 on Jio); parivahan.gov.in (missing in repeats 0-7 or 8-9 on Jio); wb.gov.in (missing in repeats 0-7 or 8-9 on Jio); wcd.gov.in (missing in repeats 0-7 or 8-9 on Jio) |
-| india | google | doh | 50 | 399 | 100 | 0-7 | 8-9 | 0.1233 | 0.0125 | 0.06 | 0.1967 | 0.06 | 0.1967 | 0.02 | 0.005 |  |
+| india | google | doh | 50 | 399 | 100 | 0-7 | 8-9 | 0.1233 | 0.0125 | 0.06 | 0.1967 | 0.06 | 0.1967 | 0.02 | 0.005 | nan |
 
 
 **Key Findings:**
-- **Google DoH:** Yields **14.0%** average accuracy (vs 2.0% chance, p < 0.005).
-- **AdGuard DoH:** Yields **5.4%** average accuracy (vs 2.0% chance, p < 0.005).
-- Fingerprinting remains highly effective and statistically significant on cellular networks.
+- **Adguard DoH (Global):** Achieves **4.1%** accuracy (vs 2.0% chance, n_test=98), not statistically distinguishable from chance (p = 0.1244).
+- **Google DoH (Global):** Achieves **15.7%** accuracy (vs 2.0% chance, n_test=100), statistically significant (p = 0.0050).
+- **Adguard DoH (India):** Achieves **6.8%** accuracy (vs 2.4% chance, n_test=79), statistically significant (p = 0.0249).
+- **Google DoH (India):** Achieves **12.3%** accuracy (vs 2.0% chance, n_test=100), statistically significant (p = 0.0050).
+- Google DoH remains statistically significant above chance across both workloads (p = 0.005).
+- AdGuard DoH achieves statistical significance on the India workload (p = 0.0249, 42 domains), while on the Global workload it is not statistically distinguishable from the 2.0% chance baseline (p = 0.1244).
 
 ---
 
@@ -42,8 +45,8 @@ Evaluating whether an attacker trained on Airtel can fingerprint victims on Jio,
 
 
 **Key Findings:**
-- **Cross-network transfer drops significantly towards chance level**, demonstrating that models trained on one carrier do NOT generalize out-of-the-box to another carrier without domain adaptation.
-- Network-specific routing, packet aggregation, and cellular latency shift the traffic silhouette.
+- **Cross-network transfer accuracy drops close to chance level (1.7%–2.4% vs 2.0% baseline)**, with domain-clustered bootstrap confidence intervals spanning chance across all evaluated slices.
+- Models trained on fixed broadband do not generalize to cellular traffic without multi-network training.
 
 ---
 
@@ -93,7 +96,7 @@ Top 10 features showing the largest distribution shift between Airtel and Jio (K
 
 ---
 
-## N6 & N8: Network Health & Carrier Blocking
+## N6 & N8: Network Health & Protocol Availability
 Empirical measurement of transport protocol reachability on Reliance Jio:
 
 | resolver | protocol | total_attempts | successful_ok | success_rate | udp_blocked_queries | latency_mean_s | latency_median_s | latency_p95_s |
@@ -107,7 +110,7 @@ Empirical measurement of transport protocol reachability on Reliance Jio:
 
 
 **Key Findings:**
-- **DoH/3 (UDP 443 / QUIC) is 100% BLOCKED:** Jio cellular actively drops outbound UDP on port 443. All 3,000 DoH/3 queries failed across Cloudflare, Google, and AdGuard (`udp_blocked_flag=true`).
+- **DoH/3 (UDP 443 / QUIC) Inaccessibility:** All 3,000 DoH/3 queries timed out on UDP port 443 across Cloudflare, Google, and AdGuard (`udp_blocked_flag=true`, 0.0% completion rate), documenting client-side QUIC timeouts on the tested cellular link.
 - **Cloudflare DoH Edge Routing:** Cloudflare DoH on Jio mobile cellular exhibited a 98.5% drop rate due to cellular route instability to Cloudflare's anycast POPs.
 - **Google DoH:** 100% reliable (1,000/1,000 ok) with mean latency of ~170ms.
 - **AdGuard DoH:** 90.5% reliable (905/1,000 ok) with mean latency of ~210ms.

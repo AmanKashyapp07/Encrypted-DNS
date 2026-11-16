@@ -4,7 +4,7 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-10%2F10%20passing-brightgreen.svg)](#6-testing-and-reproducibility)
+[![Tests](https://img.shields.io/badge/tests-33%2F33%20passing-brightgreen.svg)](#6-testing-and-reproducibility)
 [![Paper Draft](https://img.shields.io/badge/Paper-Draft%20Available-green.svg)](docs/paper.md)
 
 ---
@@ -19,7 +19,7 @@
 | **Feature Space** | **44 directional flow features** per query (sizes, bursts, inter-arrival times, signed packet sequences; zero label leakage) |
 | **Model Architectures** | Random Forest, XGBoost, 1D-CNN (sequence), GRU (recurrent), open-world detector |
 | **Reproducibility** | Full analytical suite reruns deterministically from saved feature datasets in under 6 minutes; live capture required ~20+ hours |
-| **Verification & Quality** | 10 automated unit tests, fixed deterministic seeds, 200 permutation tests per slice, auditable claims ledger |
+| **Verification & Quality** | 33 automated unit tests, 6-check provenance suite, fixed deterministic seeds, 200 permutation tests per slice, auditable claims ledger |
 | **Tech Stack** | Python, dumpcap/tshark (Wireshark suite), `q` DNS client, Scikit-Learn, PyTorch, Bash |
 
 ---
@@ -36,7 +36,7 @@ An on-path passive adversary (such as an ISP or local network observer) can trai
 
 ## 2. Key Empirical Findings
 
-### Headline Results (100-Domain Closed World, Baseline Chance = 1.0%)
+### Headline Results (Global Workload, 100-Domain Closed World, Baseline Chance = 1.0%)
 
 | Upstream Resolver | DoH (HTTP/2) Top-1 | DoH/3 (HTTP/3) Top-1 | Leakage Reduction |
 | :--- | :--- | :--- | :--- |
@@ -49,7 +49,7 @@ An on-path passive adversary (such as an ISP or local network observer) can trai
 
 ### Critical Systems Findings
 
-1. **Protocol Framing Reduces Leakage on Most Resolvers:** On Cloudflare, Quad9, and AdGuard, HTTP/3 significantly suppresses fingerprintability (leakage reduced by 57% to 85%). QUIC's mandatory Initial packet padding ($\ge 1200$ bytes) and unified frame multiplexing act as natural padding against query-length leakage.
+1. **Lower Observed Leakage for DoH/3 on Three Resolvers:** DoH/3 showed lower observed fingerprinting accuracy than DoH for AdGuard, Cloudflare, and Quad9 across the evaluated workloads (e.g., 57% to 85% observed relative reduction). This reduction is empirically associated with altered packet framing and flow size distributions; we hypothesize that QUIC datagram coalescence and connection-establishment padding reduce query-specific size variance, though multiplexing dynamics were not isolated as an independent causal factor.
 2. **The Google Anomaly (Implementation Outweighs Protocol):** Google DoH/3 exhibits smaller privacy gains (15.0% vs. 21.3%). Packet inspection revealed that Google returns unpadded response payloads where downstream packet size variations strongly correlate with the number of DNS resource records in the answer section, preserving distinct packet-size signatures.
 3. **Cross-Network Generalization Failure:** Classifiers trained on fiber broadband (Airtel) do not generalize when deployed against cellular traffic (Jio): cross-network transfer accuracy remains close to the 2.0% random chance baseline (1.7%–2.4% across 50 shared domains), with domain-clustered confidence intervals spanning the baseline in all evaluated slices. Two-sample Kolmogorov-Smirnov tests confirm major distribution shifts ($p < 10^{-6}$) in flow sizes and inter-arrival times across access networks.
 4. **Cellular UDP/443 Inaccessibility:** On Reliance Jio cellular, **100% of the 3,000 DoH/3 queries timed out** with 0 packets returned. Observations demonstrate consistent client-side timeouts on outbound UDP port 443 on the cellular test link, whereas DoH (TCP/TLS) queries succeeded. While standard dual-stack clients may fall back to TCP transports when UDP is unreachable, such fallback behavior was not experimentally measured here.
@@ -110,7 +110,7 @@ An on-path passive adversary (such as an ISP or local network observer) can trai
 ## 6. Testing and Reproducibility
 
 ```bash
-# Execute automated test suite (31 tests pass)
+# Execute automated test suite (33 tests pass)
 python3 -m unittest discover tests
 ```
 
