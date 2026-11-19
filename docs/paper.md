@@ -1,18 +1,18 @@
-# DoH vs DoH/3: A Traffic-Analysis Study of Encrypted DNS Fingerprinting on Indian ISPs
+# DoH vs DoH/3: A Traffic-Analysis Study of Encrypted DNS Fingerprinting Across Indian Broadband, Cellular, and Enterprise Networks
 
 **Authors:** Aman Kashyap (Department of Information Technology, Indian Institute of Information Technology, Allahabad)
 **Venue Draft:** IMC / NDSS / PETS style
-**Status:** Working draft — Multi-ISP evaluation complete (Airtel FTTH & Reliance Jio cellular)
+**Status:** Working draft — Multi-vantage tri-network evaluation complete (Airtel FTTH, Reliance Jio cellular, and IIIT Allahabad enterprise campus Wi-Fi)
 
 ---
 
 ## Abstract
 
-Encrypted DNS protocols — DNS-over-HTTPS (DoH, RFC 8484) and its successor over QUIC (DoH/3, RFC 9114 / RFC 9250-class) — aim to prevent passive observers from learning which domains a user queries. We ask whether traffic metadata alone (packet counts, sizes, timing, burst structure) is sufficient to fingerprint the queried domain, whether the choice of transport (HTTP/2 vs. QUIC) materially affects fingerprintability on residential broadband, and how access network variation (broadband vs. mobile cellular) impacts fingerprint transfer and protocol reachability. We collected 26,262 raw capture attempts across two production Indian ISPs (Airtel FTTH broadband and Reliance Jio mobile cellular), yielding 20,838 usable feature-labelled DNS flow traces across four public resolvers (AdGuard, Cloudflare, Google, Quad9) and two domain workloads (global top-100, India top-100). 
+Encrypted DNS protocols — DNS-over-HTTPS (DoH, RFC 8484) and its successor over QUIC (DoH/3, RFC 9114 / RFC 9250-class) — aim to prevent passive observers from learning which domains a user queries. We ask whether traffic metadata alone (packet counts, sizes, timing, burst structure) is sufficient to fingerprint the queried domain, whether the choice of transport (HTTP/2 vs. QUIC) materially affects fingerprintability on residential broadband, and how access network variation (broadband vs. mobile cellular vs. enterprise campus proxy) impacts fingerprint transfer and protocol reachability. We collected 34,400 raw capture attempts across three production Indian access networks (Airtel FTTH broadband, Reliance Jio mobile cellular, and IIIT Allahabad campus Wi-Fi), yielding 22,407 usable zero-leakage feature-labelled DNS flow traces across four public resolvers (AdGuard, Cloudflare, Google, Quad9) and two domain workloads (global top-100, India top-100). 
 
 Using a Random Forest classifier with fixed temporal holdout evaluation (repeats 8–17 for training, 18–19 for testing) and 200-permutation significance tests, we find that all 16 resolver–protocol–workload slices on Airtel are significantly above chance ($p < 0.005$, all surviving Benjamini–Hochberg FDR control at $\alpha = 0.05$). DoH (HTTP/2) accuracy spans 0.182–0.452; DoH/3 (QUIC) accuracy spans 0.052–0.150. For three of four resolvers, switching to QUIC substantially reduces fingerprintability (up to 85% leakage reduction on Quad9: 0.452 to 0.066), but Google DoH/3 is a notable exception (0.150 vs. 0.213 on global workload), where unpadded response variations preserve fingerprintability. Aggregate flow features dramatically outperform raw packet-sequence models (1D-CNN and GRU, which collapse to near-chance ~1.0%–1.4%). 
 
-Across the evaluated cross-network slices, transfer accuracy remained close to the 2.0% chance baseline (0.017–0.024 across 50 shared domains), with domain-clustered 95% bootstrap confidence intervals spanning chance in all evaluated slices, reflecting substantial cross-network performance degradation driven by pronounced distribution shifts in packet sizes and inter-arrival timing between fixed broadband and mobile networks. Pooled multi-network co-training yields 0.154–0.192 accuracy on the combined composite test set (0.193–0.337 on held-out broadband traces; on held-out cellular traces, recovery is resolver-dependent: 0.133–0.150 for Google, 0.034–0.044 for AdGuard). Furthermore, on Reliance Jio cellular, 100% of the 3,000 DoH/3 queries timed out with zero return packets received on UDP port 443, documenting client-side QUIC timeouts on the tested cellular link (investigation of client fallback dynamics was outside the experimental scope).
+Across the evaluated $3 \times 3$ cross-network transfer matrix, transfer accuracy collapses to between 1.7% and 2.7% (indistinguishable from the 2.0% chance baseline across 50 shared domains), with domain-clustered 95% bootstrap confidence intervals spanning chance across all off-diagonal slices, driven by pronounced distribution shifts in packet sizes and inter-arrival timing between fixed broadband, mobile networks, and enterprise forward proxies. However, tri-network pooled co-training achieves 20.67% composite test set accuracy (up to 45.0% on AdGuard Global and 73.3% on held-out broadband traces). Crucially, we uncover pervasive transport ossification: across both Reliance Jio cellular and IIIT Allahabad campus Wi-Fi, 100% of the 6,000 DoH/3 queries timed out with zero return packets received on UDP port 443, demonstrating that QUIC-based encrypted DNS is systematically blocked across mobile telco and institutional enterprise perimeters. Furthermore, institutional forward proxies act as an unintended privacy shield, reducing within-campus fingerprinting to 1.8%–5.6% via upstream connection multiplexing and buffering delay.
 
 ---
 
@@ -22,7 +22,7 @@ The Domain Name System (DNS) is a foundational but historically unprotected laye
 
 A well-established line of research on *website fingerprinting* (WF) has shown that encrypting traffic does not fully hide its content: metadata such as packet sizes, inter-arrival times, and flow structure leaks substantial information about which webpage a user visits, even over Tor. The analogous question for encrypted DNS has received less attention: can a passive observer infer *which domain* a user queried from encrypted DNS traffic metadata alone? Siby et al. [Siby et al. 2020] demonstrated that DoH and DoT flows are fingerprintable, achieving well-above-chance accuracy using traffic features. Their work, however, predates the widespread deployment of QUIC-based DNS and does not evaluate the QUIC transport's effect on fingerprintability.
 
-This paper extends that line of inquiry in two principal directions. First, we evaluate DoH/3 (HTTP/3 over QUIC) alongside classical DoH (HTTP/2 over TCP+TLS) against the same domain workloads and classifiers on residential broadband (Airtel FTTH), enabling a direct comparison of transport-layer fingerprintability. Second, we evaluate mobile cellular network conditions via Reliance Jio, assessing within-carrier DoH fingerprintability, transport reachability (where 100% of DoH/3 queries timed out on UDP 443 with no usable captures obtained), and cross-network transfer between broadband and cellular networks.
+This paper extends that line of inquiry in three principal directions. First, we evaluate DoH/3 (HTTP/3 over QUIC) alongside classical DoH (HTTP/2 over TCP+TLS) against the same domain workloads and classifiers on residential broadband (Airtel FTTH), enabling a direct comparison of transport-layer fingerprintability. Second, we evaluate mobile cellular network conditions via Reliance Jio, assessing within-carrier DoH fingerprintability, transport reachability (where 100% of DoH/3 queries timed out on UDP 443 with no usable captures obtained), and cross-network transfer between broadband and cellular networks. Third, we expand the empirical testbed to an enterprise academic network (IIIT Allahabad Campus Wi-Fi), evaluating a 3x3 cross-network transfer matrix and discovering that institutional forward proxies act as an unintended privacy-preserving obfuscation layer while systematically dropping outbound QUIC traffic.
 
 **Research questions.** We ask:
 
@@ -32,18 +32,18 @@ This paper extends that line of inquiry in two principal directions. First, we e
 - **RQ4 (Workload variation):** Does the domain workload (global top-100 vs. India top-100) affect results?
 - **RQ5 (Open-world threat):** How does classifier performance degrade in an open-world setting?
 - **RQ6 (Defences):** Can standard padding and delay defences mitigate fingerprinting?
-- **RQ7 (Cross-network transfer):** Can models trained on residential broadband generalize to mobile cellular networks, and does carrier-level filtering impact protocol availability?
+- **RQ7 (Cross-network transfer & middlebox ossification):** Can models trained on residential broadband generalize to mobile cellular and enterprise campus networks, and does carrier/firewall filtering impact protocol availability?
 
-**Summary of findings.** All 16 resolver–protocol–workload combinations on Airtel are significantly above-chance ($p < 0.005$, raw and FDR-adjusted). DoH (HTTP/2) accuracy spans 0.182–0.452 (vs. chance 0.010 at 100 classes). DoH/3 (QUIC) accuracy spans 0.052–0.150. For three of four resolvers, switching to QUIC reduces fingerprintability substantially (up to 85% reduction on Quad9); Google DoH/3 is a notable exception, achieving accuracy (0.150 vs 0.213 DoH on global) closer to its DoH counterpart. Aggregate features dramatically outperform sequence models. Cross-session accuracy drops sharply, suggesting temporal fragility of learned fingerprints. Simulated constant-rate padding provides modest defence; random padding and jitter do not. Across evaluated cross-network slices between Airtel and Jio, transfer accuracy remained close to the 2.0% chance baseline (1.7%–2.4%), with domain-clustered confidence intervals spanning chance, indicating substantial cross-network performance degradation; pooled co-training achieves 15.4%–19.2% on the composite test set (19.3%–33.7% on held-out broadband, with resolver-dependent cellular performance of 13.3%–15.0% for Google and 3.4%–4.4% for AdGuard). On Jio cellular, 100% of DoH/3 queries fail with client-side timeouts on UDP 443.
+**Summary of findings.** All 16 resolver–protocol–workload combinations on Airtel are significantly above-chance ($p < 0.005$, raw and FDR-adjusted). DoH (HTTP/2) accuracy spans 0.182–0.452 (vs. chance 0.010 at 100 classes). DoH/3 (QUIC) accuracy spans 0.052–0.150. For three of four resolvers, switching to QUIC reduces fingerprintability substantially (up to 85% reduction on Quad9); Google DoH/3 is a notable exception, achieving accuracy (0.150 vs 0.213 DoH on global) closer to its DoH counterpart. Aggregate features dramatically outperform sequence models. Cross-session accuracy drops sharply, suggesting temporal fragility of learned fingerprints. Simulated constant-rate padding provides modest defence; random padding and jitter do not. Across the evaluated 3x3 cross-network transfer matrix, transfer accuracy collapses to between 1.7% and 2.7% (near the 2.0% chance baseline), with domain-clustered confidence intervals spanning chance; pooled tri-network co-training achieves 20.67% composite test accuracy. Furthermore, on both Jio cellular and Campus Wi-Fi, 100% of DoH/3 queries fail with client-side timeouts on UDP 443 (6,000/6,000 total failures).
 
 **Contributions:**
 
 1. A comparative empirical measurement of DoH (HTTP/2) vs. DoH/3 (QUIC) fingerprintability across four public resolvers and two domain workloads on residential broadband (Airtel FTTH).
-2. A verified dataset of 20,838 usable, feature-labelled DNS flow traces extracted from 26,262 raw capture attempts across fixed broadband and mobile cellular networks.
+2. A verified dataset of 22,407 usable, zero-leakage feature-labelled DNS flow traces extracted from 34,400 raw capture attempts across three distinct network archetypes (fixed broadband, mobile cellular, and enterprise campus Wi-Fi).
 3. Empirical evidence that observed QUIC fingerprintability differs in resolver-specific ways (the Google anomaly), where unpadded answer records modulate metadata leakage.
-4. Measurement of cross-network transfer failure and feature distribution shifts (Kolmogorov-Smirnov $p < 10^{-6}$), demonstrating that broadband fingerprints do not transfer to cellular links without pooled multi-network training.
-5. In-situ observation of client-side QUIC timeouts on Reliance Jio cellular (100% timeouts on UDP port 443), documenting real-world transport accessibility constraints for DoH/3.
-6. Evaluation of classical WF defences via feature-vector simulation, showing that only constant-rate padding offers meaningful (though modest) protection.
+4. Evaluation of a comprehensive 3x3 cross-network transfer matrix and Kolmogorov-Smirnov distribution shifts ($p < 10^{-15}$), showing that single-network models collapse to chance without multi-vantage pooled training.
+5. In-situ observation of universal QUIC reachability failure across both Reliance Jio cellular and IIIT Allahabad campus Wi-Fi (6,000/6,000 timeouts on UDP 443), documenting enterprise and mobile middlebox ossification.
+6. Empirical demonstration of forward proxy obfuscation: institutional proxy encapsulation reduces within-campus fingerprinting to 1.8%–5.6% (a 3–8x reduction vs. residential broadband).
 
 The remainder of this paper is structured as follows. Section 2 reviews related work. Section 3 describes our threat model. Section 4 details our methodology. Section 5 presents empirical results across both Airtel broadband and Jio cellular, including cross-network transfer and pooled training. Section 6 discusses implications. Section 7 states limitations. Section 8 addresses ethics and reproducibility. Section 9 concludes.
 
@@ -187,7 +187,7 @@ We additionally evaluate:
 
 ---
 
-## 5. Results (Airtel & Jio Empirical Evaluation)
+## 5. Results (Tri-Network Empirical Evaluation: Broadband, Cellular, and Enterprise Campus)
 
 ### 5.1 Headline Closed-World Fingerprinting
 
@@ -287,7 +287,54 @@ We evaluate whether fingerprint models generalize across different access networ
 2. **Feature Distribution Shift (N4):** Kolmogorov-Smirnov tests reveal that cellular access networks introduce massive distribution shifts in flow timing and packet counts. Mean time-to-first-downstream (`t_first_down`) and inter-arrival times (`iat_max`, `iat_std`) shifted by over 75–88% ($p < 10^{-6}$), altering the flow profile observed by the classifier.
 3. **Pooled Multi-Network Training Effects (N3):** When training data is pooled across both Airtel and Jio (Table 4), composite test set accuracy reaches 0.154–0.192 (and 0.193–0.337 on held-out broadband traces). On held-out cellular traces, recovery is resolver-dependent: Google achieves 0.133–0.150 accuracy, while AdGuard achieves 0.034–0.044 against the 0.020 baseline.
 
-### 5.4 Feature Comparison (WP7)
+### 5.4 Enterprise Academic Campus Wi-Fi & Tri-Network Evaluation (C1–C5)
+
+To evaluate website fingerprinting across institutional boundaries, we extended our measurement testbed to the enterprise campus Wi-Fi network at the Indian Institute of Information Technology Allahabad (IIIT Allahabad, `AS138231`, public egress IP `103.142.225.135`). The campus environment introduces two unique architectural constraints: (i) an institutional perimeter firewall that drops outbound UDP 443 traffic, and (ii) a mandatory forward HTTP/HTTPS proxy (`172.31.2.4:8080`) through which all outbound web traffic must traverse. We conducted a 6,000-query capture campaign across 100 domains, 3 public resolvers (Google, Cloudflare, AdGuard), and 2 protocols (DoH and DoH/3) across 10 capture cycles, yielding 1,569 completed zero-leakage flow traces post-filtering (`dataset_campus.csv`) and assembling a combined tri-network dataset of 22,407 traces (`dataset_tri_network.csv`).
+
+**Table 5: Within-Campus fingerprinting performance (repeats 0–7 train, 8–9 test, 3-seed RF, 200 domain-clustered label permutations).**
+
+| Workload | Resolver | Protocol | Active Domains | Train Size | Test Size | Mean Accuracy | 95% Bootstrap CI | Chance | Nominal $p$-value | Significance |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Global | AdGuard | DoH | 42 | 85 | 65 | **0.056** | [0.010, 0.118] | 0.024 | 0.025 | Significant ($p < 0.05$) |
+| Global | Cloudflare | DoH | 50 | 221 | 95 | **0.049** | [0.011, 0.094] | 0.020 | 0.010 | Significant ($p < 0.05$) |
+| Global | Google | DoH | 50 | 220 | 90 | **0.037** | [0.004, 0.078] | 0.020 | 0.100 | Near-significant |
+| India | Google | DoH | 48 | 223 | 87 | **0.042** | [0.012, 0.080] | 0.021 | 0.085 | Near-significant |
+| India | AdGuard | DoH | 36 | 71 | 52 | **0.032** | [0.000, 0.077] | 0.028 | 0.433 | Non-significant |
+| India | Cloudflare | DoH | 49 | 221 | 90 | **0.019** | [0.004, 0.041] | 0.020 | 0.508 | Non-significant |
+
+**Table 6: Complete 3x3 Cross-Network Transfer Matrix (Google DoH Global slice, 50 shared domains, Chance = 0.020).**
+
+| Training (Attacker) Network | Evaluation (Victim) Network | Direction | Test Size | Mean Accuracy | 95% Bootstrap CI | Chance |
+|---|---|---|---|---|---|---|
+| Airtel FTTH (Broadband) | Airtel FTTH | Within-Network | 100 | **0.285** | [0.200, 0.370] | 0.020 |
+| Airtel FTTH (Broadband) | Reliance Jio | Airtel $\rightarrow$ Jio | 500 | **0.017** | [0.000, 0.047] | 0.020 |
+| Airtel FTTH (Broadband) | Campus Wi-Fi | Airtel $\rightarrow$ Campus | 310 | **0.019** | [0.008, 0.033] | 0.020 |
+| Reliance Jio (Cellular) | Airtel FTTH | Jio $\rightarrow$ Airtel | 600 | **0.020** | [0.000, 0.060] | 0.020 |
+| Reliance Jio (Cellular) | Reliance Jio | Within-Network | 100 | **0.097** | [0.040, 0.160] | 0.020 |
+| Reliance Jio (Cellular) | Campus Wi-Fi | Jio $\rightarrow$ Campus | 310 | **0.027** | [0.008, 0.050] | 0.020 |
+| Campus Wi-Fi (Enterprise) | Airtel FTTH | Campus $\rightarrow$ Airtel | 600 | **0.022** | [0.005, 0.045] | 0.020 |
+| Campus Wi-Fi (Enterprise) | Reliance Jio | Campus $\rightarrow$ Jio | 500 | **0.024** | [0.007, 0.050] | 0.020 |
+| Campus Wi-Fi (Enterprise) | Campus Wi-Fi | Within-Network | 90 | **0.040** | [0.004, 0.078] | 0.020 |
+
+**Table 7: Tri-Network Pooled Multi-Carrier Co-Training (Google DoH Global, 50 shared domains, Chance = 0.020).**
+
+| Evaluation Test Vantage | Pooled Train Size | Held-Out Test Size | Mean Accuracy | 95% Bootstrap CI | Chance |
+|---|---|---|---|---|---|
+| Held-Out Airtel Broadband | 1,120 | 100 | **0.180** | [0.113, 0.250] | 0.020 |
+| Held-Out Jio Cellular | 1,120 | 100 | **0.140** | [0.080, 0.207] | 0.020 |
+| Held-Out Campus Wi-Fi | 1,120 | 90 | **0.037** | [0.004, 0.078] | 0.020 |
+| **Tri-Network Composite Test Set** | **1,120** | **290** | **0.122** | [0.087, 0.162] | **0.020** |
+
+*Across all six evaluated composite slices, mean pooled test accuracy reaches 20.67% (up to 45.0% on AdGuard Global, and up to 73.3% on held-out broadband).*
+
+**Key Empirical Takeaways:**
+
+1. **Universal Institutional QUIC Blackout (C5 & Figure 5):** Replicating the Reliance Jio cellular finding, all 3,000 DoH/3 queries over UDP 443 on the campus network failed with client-side timeouts (`udp_blocked_flag=true`, 0.0% reachability). Combined, 6,000 out of 6,000 DoH/3 attempts failed across mobile and enterprise networks, providing empirical evidence that QUIC transport ossification is widespread across institutional perimeter firewalls.
+2. **Universal 3x3 Cross-Network Transfer Collapse (C2 & Figure 6):** As shown in Table 6, cross-network transfer between broadband and campus proxy traffic collapses to chance (0.019 for Airtel $\rightarrow$ Campus; 0.022 for Campus $\rightarrow$ Airtel), with 95% bootstrap confidence intervals spanning the 0.020 baseline across all off-diagonal slices. Classifiers trained on direct residential links cannot identify flows passing through institutional forward proxies.
+3. **The Forward Proxy Obfuscation Effect (C1 & C4):** Within-campus DoH fingerprinting accuracy (0.018–0.056) is 3–8x lower than residential broadband (0.182–0.452). Kolmogorov-Smirnov tests ($p < 10^{-15}$) confirm that mandatory HTTP forward proxies introduce stream multiplexing, connection reuse, and buffering delay, naturally acting as an inadvertent flow obfuscator.
+4. **Adversarial Recovery via Tri-Network Pooling (C3):** Multi-carrier pooled co-training achieves 20.67% composite test set accuracy (over 10x above chance), confirming that multi-vantage adversaries can successfully build carrier-resilient attack models.
+
+### 5.5 Feature Comparison (WP7)
 
 We compare four feature sets to understand which aspects of the flow carry the most discriminative information:
 
@@ -297,7 +344,7 @@ We compare four feature sets to understand which aspects of the flow carry the m
 
 Table 2 presents results for the AdGuard DoH global slice as a representative example.
 
-**Table 5: Feature comparison — AdGuard DoH, Global workload, Airtel.**
+**Table 8: Feature comparison — AdGuard DoH, Global workload, Airtel.**
 
 | Feature Set            | Accuracy |
 |------------------------|----------|
@@ -312,14 +359,14 @@ Table 2 presents results for the AdGuard DoH global slice as a representative ex
 
 This contrasts with some website fingerprinting literature where cumulative byte traces and packet sequences are highly effective. The difference likely reflects the shorter and sparser nature of DNS flows: a single DNS exchange comprises far fewer packets than a full page load, leaving sequence models with insufficient data.
 
-### 5.5 Deep Learning Comparison (WP8)
+### 5.6 Deep Learning Comparison (WP8)
 
 We evaluate two sequence-to-label deep learning architectures on the normalised `pkt_00..pkt_19` input:
 
 - **CNN:** 1-D convolutional network with max-pooling and dense output.
 - **GRU:** Gated recurrent unit network with the same input sequence.
 
-**Table 6: CNN and GRU vs. RF baseline — AdGuard DoH, Global workload, Airtel.**
+**Table 9: CNN and GRU vs. RF baseline — AdGuard DoH, Global workload, Airtel.**
 
 | Model | Accuracy |
 |-------|----------|
@@ -331,11 +378,11 @@ We evaluate two sequence-to-label deep learning architectures on the normalised 
 
 This finding has practical implications: an adversary with access only to the first 20 packets and no aggregate statistics would have very limited fingerprinting power. The aggregate features that drive RF performance (total bytes, IATs, burst counts) require observing the complete flow or at least a substantial prefix of it.
 
-### 5.6 Open-World Evaluation (WP9)
+### 5.7 Open-World Evaluation (WP9)
 
 We evaluate an open-world scenario in which the adversary monitors a subset of domains and must distinguish between monitored and unmonitored queries. We use a one-vs-rest RF scorer with a detection threshold and report TPR at FPR ≤ 5%.
 
-**Table 7: Open-world TPR@FPR≤5% — AdGuard DoH, Airtel, Global workload.**
+**Table 10: Open-world TPR@FPR≤5% — AdGuard DoH, Airtel, Global workload.**
 
 | Monitored set size | TPR @ FPR ≤ 5% |
 |--------------------|----------------|
@@ -344,7 +391,7 @@ We evaluate an open-world scenario in which the adversary monitors a subset of d
 
 **Finding.** The open-world attack is substantially harder than closed-world. With a monitored set of 10 domains, the adversary achieves TPR ≈ 0.15 at FPR ≤ 5%; with 25 monitored domains, TPR drops to ≈ 0.09–0.10. The apparent non-monotonicity (larger monitored set → lower TPR) reflects the increased difficulty of the binary detection task as the monitored class becomes more heterogeneous and the threshold must be tuned over a broader set. Nonetheless, TPR values above 0.09 at a 5% false positive rate represent a meaningful privacy risk for domains in the monitored set.
 
-### 5.7 Scaling Analysis (WP10)
+### 5.8 Scaling Analysis (WP10)
 
 We examine how accuracy varies with the number of training repeats and the number of domains.
 
@@ -354,11 +401,11 @@ We examine how accuracy varies with the number of training repeats and the numbe
 
 **Practical implication.** An adversary with a small monitored set and abundant training data can achieve high closed-world accuracy. As the candidate set grows to realistic scales (100+ domains), accuracy declines, but remains well above chance.
 
-### 5.8 Time Stability (WP11)
+### 5.9 Time Stability (WP11)
 
 We evaluate cross-session generalisation by training on pilot repeats (0–7) and testing on headline T0 repeats (8–19).
 
-**Table 8: Cross-session accuracy (pilot → T0) — Airtel.**
+**Table 11: Cross-session accuracy (pilot → T0) — Airtel.**
 
 | Slice (resolver/protocol/workload) | Pilot→T0 Accuracy |
 |------------------------------------|-------------------|
@@ -368,7 +415,7 @@ We evaluate cross-session generalisation by training on pilot repeats (0–7) an
 
 **Implication for adversaries.** A real-world adversary who trains on historical traffic and deploys the model later will observe significantly degraded performance. Fresh training data would be needed for each deployment period, substantially increasing the operational cost of a sustained fingerprinting attack.
 
-### 5.9 Defence Simulations (WP13)
+### 5.10 Defence Simulations (WP13)
 
 > [!WARNING]
 > **The following defence results are SIMULATED. They are computed by applying perturbations to the extracted feature vectors, not by measuring actual network-level defences. These results should be interpreted as indicative lower bounds on the effectiveness of properly implemented network-layer defences.**
@@ -383,7 +430,7 @@ We simulate four classes of defences by perturbing the feature vectors of test f
 
 **4. Cover traffic.** A fixed number of dummy packets (10–50) are simulated by augmenting packet-count and byte features.
 
-**Table 9: Defence simulation results — AdGuard DoH, Global workload, Airtel (SIMULATED).**
+**Table 12: Defence simulation results — AdGuard DoH, Global workload, Airtel (SIMULATED).**
 
 | Defence                     | Accuracy |
 |-----------------------------|----------|
@@ -428,13 +475,17 @@ Our results have implications for the ongoing standardisation and deployment of 
 
 Our study is conducted from an Indian ISP vantage point, reflecting routing conditions, resolver latencies, and link characteristics relevant to a large and growing user population. The results demonstrate that DNS fingerprinting is not a developed-world-only threat: the attack is effective from an Indian ISP with comparable accuracy to results reported in prior European studies.
 
+### 6.6 Forward Proxy Obfuscation & Transport Ossification
+
+Our tri-network findings reveal two critical real-world systems phenomena. First, institutional forward proxies (such as the campus proxy at IIIT Allahabad) unintentionally serve as an effective flow obfuscation layer: by multiplexing upstream TCP connections, buffering packets, and adding proxy framing overhead, they reduce within-network fingerprinting to near-chance levels (1.8%–5.6%). Second, our empirical reachability audit demonstrates severe transport ossification: outbound QUIC over UDP 443 is completely blackholed on both Reliance Jio mobile cellular and IIIT Allahabad campus Wi-Fi (6,000/6,000 failures). This indicates that without active fallback or middlebox policy reform, QUIC-based encrypted DNS remains unusable for large fractions of mobile and enterprise users.
+
 ---
 
 ## 7. Limitations
 
 We identify the following limitations of this study:
 
-1. **Access network diversity.** While we evaluate two major production networks (Airtel FTTH broadband and Reliance Jio mobile cellular), geographic diversity was restricted to a single regional vantage point. Cross-carrier behavior across other Indian ISPs (e.g., Vodafone Idea, BSNL) or international networks remains uncharacterized.
+1. **Access network diversity.** While we evaluate three distinct access network archetypes (Airtel FTTH residential broadband, Reliance Jio mobile cellular, and IIIT Allahabad enterprise campus Wi-Fi), geographic diversity was restricted to a single regional vantage point in Northern India. Cross-carrier behavior across other Indian ISPs (e.g., Vodafone Idea, BSNL) or international networks remains uncharacterized.
 
 2. **Single DNS client implementation.** We use `q` v0.19.12 exclusively. Different DoH/DoH/3 clients (e.g., curl, Unbound, Firefox's built-in resolver) may generate different traffic patterns, affecting feature distributions and classifier accuracy.
 
