@@ -8,7 +8,7 @@
 [![Paper Draft](https://img.shields.io/badge/Paper-Draft%20Available-green.svg)](docs/paper.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](license)
 
-**An empirical research artifact evaluating website fingerprinting attacks and transport reachability on encrypted DNS (DoH and DoH/3). Measured across 32,262 raw queries (yielding 22,407 zero-leakage feature traces) spanning three real-world access network archetypes: Residential FTTH Broadband (Airtel), Mobile Cellular (Reliance Jio), and Enterprise Academic Campus Wi-Fi (IIIT Allahabad).**
+**An empirical research artifact evaluating website fingerprinting attacks and transport reachability on encrypted DNS (DoH and DoH/3). Measured across 34,400 raw capture attempts (yielding 22,407 zero-leakage feature traces post-filtering) spanning three real-world access network archetypes: Residential FTTH Broadband (Airtel), Mobile Cellular (Reliance Jio), and Enterprise Academic Campus Wi-Fi (IIIT Allahabad).**
 
 ---
 
@@ -20,7 +20,7 @@ For artifact evaluators, committee members, and researchers reproducing our resu
 | :--- | :--- | :--- |
 | **Reproduce All Results** | [1-Click Reproducibility](#1-click-artifact-reproducibility-6-minutes) | Execute automated analytical suite in **~6 minutes** |
 | **Verify Claims Ledger** | [Statistical Rigor & Claims Ledger](#4-statistical-rigor--claims-ledger) | `python3 scripts/verify_research_results.py` (**6/6 checks**) |
-| **Inspect Tri-Network Scale** | [Empirical Archetypes](#2-tri-network-empirical-scale--archetypes) | 32,262 raw queries, 22,407 processed feature flows |
+| **Inspect Tri-Network Scale** | [Empirical Archetypes](#2-tri-network-empirical-scale--archetypes) | 34,400 raw queries, 22,407 processed feature flows |
 | **View Figures & Heatmaps** | [Empirical Visualizations](#3-key-findings--empirical-visualizations) | [Figure 5 (Reachability)](#protocol-reachability-audit-figure-5) & [Figure 6 ($3 \times 3$ Matrix)](#3-times-3-cross-network-transfer-matrix-figure-6) |
 | **Review Academic Manuscript**| [Paper Manuscript](docs/paper.md) | Full 9-section academic paper draft |
 | **Audit Feature Space** | [Features Specification](docs/features.md) | 44-dimensional directional representation (zero label leakage) |
@@ -59,7 +59,7 @@ Our testbed evaluates three fundamentally distinct physical access network arche
 | **Residential FTTH Broadband** | Bharti Airtel Fiber | `AS24560` | Direct optical fiber link; low latency jitter; MTU 1,500 B. | Unrestricted routing; UDP 443 fully open (**100% DoH/3 reachable**). | **18,926** |
 | **Mobile Cellular (4G/LTE)** | Reliance Jio Infocomm | `AS55836` | Wireless radio link; carrier-grade NAT (CGNAT); MTU 1,340 B. | Outbound UDP 443 dropped at carrier perimeter (**0% DoH/3 reachable**). | **1,912** |
 | **Enterprise Academic Wi-Fi** | IIIT Allahabad | `AS138231` | Multi-hop institutional Wi-Fi; proxy buffering; MTU 1,500 B. | Mandatory forward HTTP/HTTPS proxy (`172.31.2.4:8080`); UDP 443 blocked (**0% DoH/3 reachable**). | **1,569** |
-| **Tri-Network Composite** | *All 3 Networks* | — | **32,262 raw capture attempts** across 31,200 unique query keys. | **Combined multi-network benchmark dataset.** | **22,407** |
+| **Tri-Network Composite** | *All 3 Networks* | — | **34,400 raw capture attempts** (22,400 Airtel × 20 repeats; 6,000 Jio × 10 repeats; 6,000 Campus × 10 repeats). | **Combined multi-network benchmark dataset.** | **22,407** |
 
 ---
 
