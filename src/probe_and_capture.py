@@ -53,11 +53,12 @@ MANIFEST_FIELDS = [
 ]
 
 
-def uri_for(protocol: str, host: str, path: str) -> tuple[str, list[str]]:
+def uri_for(protocol: str, host: str, path: str, allow_proxy: bool = False) -> tuple[str, list[str]]:
     """Return (server URI, extra q flags). q has no h3:// scheme: DoH/3 is
-    https:// plus --http3, and DoH is pinned to HTTP/2 with --http2."""
+    https:// plus --http3, and DoH is pinned to HTTP/2 with --http2 (unless behind forward proxy)."""
     if protocol == "doh":
-        return f"https://{host}{path}", ["--http2"]
+        extra = [] if allow_proxy else ["--http2"]
+        return f"https://{host}{path}", extra
     if protocol == "doh3":
         return f"https://{host}{path}", ["--http3"]
     raise ValueError(f"Unsupported protocol: {protocol}")
@@ -279,7 +280,7 @@ def anonymize_machine_id(label: str) -> str:
     return "machine:" + hashlib.sha256(f"{salt}:{label}".encode()).hexdigest()[:16]
 
 
-def capture_one(dumpcap, q, iface, bpf, uri, extra, domain, pcap, seconds, warmup, q_json_flag):
+def capture_one(dumpcap, q, iface, bpf, uri, extra, domain, pcap, seconds, warmup, q_json_flag, allow_proxy: bool = False):
     cap = subprocess.Popen(
         [dumpcap, "-i", iface, "-f", bpf, "-F", "pcap", "-w", str(pcap),
          "-a", f"duration:{seconds}"],
@@ -288,8 +289,11 @@ def capture_one(dumpcap, q, iface, bpf, uri, extra, domain, pcap, seconds, warmu
     time.sleep(warmup)  # let dumpcap start listening
     t0 = time.time()
     note = ""
-    # Strip any HTTP proxy environment variables so q queries resolvers directly over the network interface
-    q_env = {k: v for k, v in os.environ.items() if "proxy" not in k.lower()}
+    if allow_proxy:
+        q_env = dict(os.environ)
+    else:
+        # Strip any HTTP proxy environment variables so q queries resolvers directly over the network interface
+        q_env = {k: v for k, v in os.environ.items() if "proxy" not in k.lower()}
     try:
         # Enforce 2s timeout for q to match max_latency and avoid hanging on dropped UDP
         command = [q, domain, "A", f"@{uri}", "--opt", "--timeout=2s", *extra]
@@ -369,6 +373,7 @@ def main() -> int:
     ap.add_argument("--wireshark-dir", default=default_ws)
     ap.add_argument("--q-path", help=r"full path to q executable (defaults to ./bin/q or PATH)")
     ap.add_argument("--q-json-flag", default="", help=argparse.SUPPRESS)
+    ap.add_argument("--allow-proxy", action="store_true", help="preserve HTTP proxy environment variables (for campus networks)")
     ap.add_argument("--dry-run", action="store_true", help="write valid manifest rows without network commands")
     ap.add_argument("--run-dir", type=Path,
                     help="isolated run directory; writes manifest.csv and pcaps/ here")
@@ -451,14 +456,24 @@ def main() -> int:
             rel = str(pcap.relative_to(ROOT))
             if rel in done:
                 continue
-            uri, extra = uri_for(proto, host, path)
+            allow_proxy = bool(args.network == "campus" or args.allow_proxy)
+            uri, extra = uri_for(proto, host, path, allow_proxy=allow_proxy)
+            if allow_proxy and proto == "doh":
+                # For DoH through campus forward proxy, capture traffic to proxy gateway
+                proxy_ip = "172.31.2.4"
+                bpf = f"host {proxy_ip} and port 8080"
+                logged_ips = [proxy_ip]
+            else:
+                bpf = build_filter(ips, proto)
+                logged_ips = ips
+
             if args.dry_run:
                 rc, lat, note, ts = "", "", "No network command executed.", int(time.time())
                 metadata, pkts, nbytes, status = parse_q_json(""), "", "", "dry_run"
             else:
                 rc, lat, note, ts, metadata = capture_one(
-                    dumpcap, q, args.iface, build_filter(ips, proto), uri, extra,
-                    domain, pcap, args.capture_seconds, args.warmup, args.q_json_flag)
+                    dumpcap, q, args.iface, bpf, uri, extra,
+                    domain, pcap, args.capture_seconds, args.warmup, args.q_json_flag, allow_proxy=allow_proxy)
                 pkts, nbytes = count_packets(tshark, pcap) if pcap.exists() else (0, 0)
                 status = ""
             if args.dry_run:
@@ -492,7 +507,7 @@ def main() -> int:
                 "repeat": rep, "returncode": rc, "latency_s": round(lat, 4) if not args.dry_run else "",
                 "packets": pkts, "bytes": nbytes, **metadata,
                 "udp_blocked_flag": str(proto == "doh3" and status in {"query_failed", "no_packets", "incomplete"}).lower(), "status": status,
-                "server_ips": ";".join(ips), "pcap_path": rel, "note": note,
+                "server_ips": ";".join(logged_ips), "pcap_path": rel, "note": note,
             })
             mf.flush()
             eta_min = (time.time() - start) / i * (len(jobs) - i) / 60

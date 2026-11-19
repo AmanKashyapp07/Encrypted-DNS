@@ -1,0 +1,23 @@
+workload,resolver,test_network,shared_domains,n_train_pooled,n_test,accuracy,ci_low,ci_high,ci_boot_low,ci_boot_high,chance
+global,google,Airtel (held-out),50,1120,100,0.18,0.1133,0.25,0.1133,0.25,0.02
+global,google,Jio (held-out),50,1120,100,0.14,0.08,0.2067,0.08,0.2067,0.02
+global,google,Campus (held-out),50,1120,90,0.037,0.0037,0.0778,0.0037,0.0778,0.02
+global,google,Tri-Network Composite (held-out),50,1120,290,0.1218,0.0867,0.1615,0.0867,0.1615,0.02
+global,cloudflare,Airtel (held-out),5,76,10,0.7333,0.5,0.9667,0.5,0.9667,0.2
+global,cloudflare,Campus (held-out),5,76,10,0.1667,0.0,0.5,0.0,0.5,0.2
+global,cloudflare,Tri-Network Composite (held-out),5,76,20,0.45,0.25,0.7,0.25,0.7,0.2
+global,adguard,Airtel (held-out),49,981,98,0.3129,0.2245,0.4048,0.2245,0.4048,0.0204
+global,adguard,Jio (held-out),49,981,96,0.0451,0.0136,0.0887,0.0136,0.0887,0.0204
+global,adguard,Campus (held-out),49,981,65,0.041,0.0101,0.0821,0.0101,0.0821,0.0204
+global,adguard,Tri-Network Composite (held-out),49,981,259,0.1454,0.1115,0.1838,0.1115,0.1838,0.0204
+india,google,Airtel (held-out),50,1133,100,0.2033,0.1367,0.28,0.1367,0.28,0.02
+india,google,Jio (held-out),50,1133,100,0.1467,0.08,0.2234,0.08,0.2234,0.02
+india,google,Campus (held-out),50,1133,87,0.023,0.0037,0.0504,0.0037,0.0504,0.02
+india,google,Tri-Network Composite (held-out),50,1133,287,0.1289,0.0897,0.1707,0.0897,0.1707,0.02
+india,cloudflare,Airtel (held-out),9,137,18,0.3889,0.1296,0.6481,0.1296,0.6481,0.1111
+india,cloudflare,Campus (held-out),9,137,15,0.1111,0.0,0.3056,0.0,0.3056,0.1111
+india,cloudflare,Tri-Network Composite (held-out),9,137,33,0.2626,0.0967,0.4444,0.0967,0.4444,0.1111
+india,adguard,Airtel (held-out),49,845,94,0.2801,0.2,0.3653,0.2,0.3653,0.0204
+india,adguard,Jio (held-out),49,845,77,0.026,0.0043,0.0586,0.0043,0.0586,0.0204
+india,adguard,Campus (held-out),49,845,62,0.0376,0.0,0.0847,0.0,0.0847,0.0204
+india,adguard,Tri-Network Composite (held-out),49,845,233,0.1316,0.0961,0.1674,0.0961,0.1674,0.0204

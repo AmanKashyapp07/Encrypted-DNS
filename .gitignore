@@ -51,6 +51,8 @@ data/processed/*
 !data/processed/dataset_pilot_v1.csv
 !data/processed/dataset_v2.csv
 !data/processed/dataset_jio.csv
+!data/processed/dataset_campus.csv
+!data/processed/dataset_tri_network.csv
 !data/processed/dataset_combined.csv
 !data/processed/drop_reasons_v2.csv
 !data/processed/drop_reasons_jio.csv
@@ -61,6 +63,7 @@ results/*
 !results/figures/
 !results/airtel_topup_20261113/
 !results/jio_analysis_20261113/
+!results/campus_analysis_20261120/
 !results/airtel_all_20261113/
 !results/airtel_advanced_20261113/
 *.pcap

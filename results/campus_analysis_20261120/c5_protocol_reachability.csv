@@ -1,0 +1,7 @@
+resolver,protocol,total_attempts,successful_ok,success_rate,udp_blocked_count,latency_mean_s,latency_p95_s
+adguard,doh,1000,309,0.309,0,0.8739,1.2708
+adguard,doh3,1000,0,0.0,1000,,
+cloudflare,doh,1000,629,0.629,0,0.368,1.2244
+cloudflare,doh3,1000,0,0.0,1000,,
+google,doh,1000,631,0.631,0,0.3676,1.2271
+google,doh3,1000,0,0.0,1000,,
