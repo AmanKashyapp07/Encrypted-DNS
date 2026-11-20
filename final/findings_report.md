@@ -49,11 +49,12 @@ This study empirically addresses three research questions:
 
 Three fundamentally distinct physical access environments were measured:
 
-| Archetype | Operator | AS Number | Key Characteristics |
-| :--- | :--- | :--- | :--- |
-| **Residential FTTH Broadband** | Bharti Airtel Fiber | `AS24560` | Direct optical fiber; MTU 1,500 B; low latency jitter; unrestricted outbound routing. |
-| **Mobile Cellular (4G/LTE)** | Reliance Jio Infocomm | `AS55836` | Wireless radio link; Carrier-Grade NAT (CGNAT); MTU 1,340 B; carrier middlebox policies. |
-| **Enterprise Academic Wi-Fi** | IIIT Allahabad | `AS138231` | Multi-hop campus Wi-Fi; mandatory forward HTTP/HTTPS proxy (`172.31.2.4:8080`); institutional perimeter firewall. |
+| Archetype | Operator | AS Number | Key Characteristics | Usable Traces |
+| :--- | :--- | :--- | :--- | :---: |
+| **Residential FTTH Broadband** | Bharti Airtel Fiber | `AS24560` | Direct optical fiber; MTU 1,500 B; low latency jitter; unrestricted outbound routing. | **18,926** |
+| **Mobile Cellular (4G/LTE)** | Reliance Jio Infocomm | `AS55836` | Wireless radio link; Carrier-Grade NAT (CGNAT); MTU 1,340 B; carrier middlebox policies. | **1,912** |
+| **Enterprise Academic Wi-Fi** | IIIT Allahabad | `AS138231` | Multi-hop campus Wi-Fi; mandatory forward HTTP/HTTPS proxy (`172.31.2.4:8080`); institutional perimeter firewall. | **1,569** |
+| **Tri-Network Composite** | *All 3 Networks* | — | **34,400 raw attempts** across 100 pinned domains and 4 public resolvers. | **22,407** |
 
 ### 1.5 Scope Boundaries & What This Study Does Not Claim
 
