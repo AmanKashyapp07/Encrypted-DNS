@@ -5,7 +5,8 @@
 [![Artifact: Reproduced](https://img.shields.io/badge/Results-Reproduced%20(~6m)-success.svg)](#1-click-artifact-reproducibility-6-minutes)
 [![Python: 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Tests: 34/34 Passing](https://img.shields.io/badge/tests-34%2F34%20passing-brightgreen.svg)](#6-testing--numerical-verification)
-[![Paper Draft](https://img.shields.io/badge/Paper-Draft%20Available-green.svg)](docs/paper.md)
+[![IEEE Paper: 6-Page Camera Ready](https://img.shields.io/badge/IEEE%20Paper-6--Page%20PDF-red.svg)](paper/paper.pdf)
+[![Final Deliverables](https://img.shields.io/badge/Final-Submission%20Package-green.svg)](final/README.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](license)
 
 **An empirical research artifact evaluating website fingerprinting attacks and transport reachability on encrypted DNS (DoH and DoH/3). Measured across 34,400 raw capture attempts (yielding 22,407 zero-leakage feature traces post-filtering) spanning three real-world access network archetypes: Residential FTTH Broadband (Airtel), Mobile Cellular (Reliance Jio), and Enterprise Academic Campus Wi-Fi (IIIT Allahabad).**
@@ -22,8 +23,11 @@ For artifact evaluators, committee members, and researchers reproducing our resu
 | **Verify Claims Ledger** | [Statistical Rigor & Claims Ledger](#4-statistical-rigor--claims-ledger) | `python3 scripts/verify_research_results.py` (**6/6 checks**) |
 | **Inspect Tri-Network Scale** | [Empirical Archetypes](#2-tri-network-empirical-scale--archetypes) | 34,400 raw queries, 22,407 processed feature flows |
 | **View Figures & Heatmaps** | [Empirical Visualizations](#3-key-findings--empirical-visualizations) | [Figure 5 (Reachability)](#protocol-reachability-audit-figure-5) & [Figure 6 ($3 \times 3$ Matrix)](#3-times-3-cross-network-transfer-matrix-figure-6) |
-| **Review Academic Manuscript**| [Paper Manuscript](docs/paper.md) | Full 9-section academic paper draft |
-| **Audit Feature Space** | [Features Specification](docs/features.md) | 44-dimensional directional representation (zero label leakage) |
+| **Read IEEE Research Paper**| [IEEE 6-Page Paper PDF](paper/paper.pdf) | Camera-ready 6-page IEEE conference manuscript ([LaTeX](paper/paper.tex)) |
+| **Final Submission Package**| [Final Deliverables Guide](final/README.md) | Executive brief, 10-slide deck, and master claims ledger |
+| **Audit Feature Space** | [Feature Extractor (44 Features)](src/extract_features.py) | 44-dimensional directional representation (zero label leakage) |
+| **Presentation & Speech Notes** | [Speaker Script & Slide Guides](docs/speech.md) | Word-for-word presentation delivery script & [Slide Analysis](docs/slides_analysis/) |
+| **Mathematical Foundations** | [Maths & Statistical Reference](docs/maths.md) | Formal equations, KS divergence, and bootstrap CI derivations |
 
 ---
 
@@ -198,14 +202,25 @@ python3 scripts/verify_research_results.py
 ├── contributing.md                     # Guidelines for code & data contributions
 ├── license                             # MIT License
 ├── requirements.txt                    # Python environment specifications
-├── docs/
-│   ├── paper.md                        # Full academic research paper (9 sections, 9 tables)
-│   ├── dataset.md                      # Capture matrix, filtering criteria, and drop accounting
-│   ├── features.md                     # 44 flow features documentation & zero-leakage guarantees
-│   ├── methodology.md                  # Evaluation protocols, temporal splits, and permutation tests
-│   ├── limitations.md                  # Threat model constraints, scope boundaries, and ethics
+├── pyproject.toml                      # Package build configuration
+├── final/                              # Curated submission deliverables for academic evaluation
+│   ├── README.md                       # Submission package index and reviewer guide
+│   ├── findings_report.md              # Executive brief (5 key findings and conclusions)
+│   ├── paper.md                        # Full academic paper draft (9 sections, 12 tables)
+│   ├── presentation_slides.md          # 10-slide deck with speaker notes & viva defense FAQ
+│   ├── claims_ledger.csv               # Master claims ledger (39 verified claims)
+│   └── figures/                        # 300 DPI vector publication figures (Figs 1–6)
+├── paper/                              # 6-page IEEE conference research paper
+│   ├── paper.tex                       # IEEEtran LaTeX source
+│   ├── paper.pdf                       # Compiled 6-page camera-ready research paper
+│   ├── references.bib                  # BibTeX bibliography
+│   └── figures/                        # High-resolution figures used in paper
+├── docs/                               # Presentation notes & mathematical foundations
+│   ├── maths.md                        # Complete mathematical equations & statistical formulas
+│   ├── speech.md                       # Speaker presentation script & timing breakdown
 │   ├── claims_ledger.csv               # Verification ledger mapping 39 claims to pipeline outputs
-│   └── commands.md                     # Measurement runbook and execution parameters
+│   ├── slides_analysis/                # In-depth slide-by-slide analysis guides (Slides 1–14)
+│   └── understanding/                  # Deep 9-layer understanding reports & viva matrices
 ├── data/
 │   └── processed/
 │       ├── dataset_v2.csv              # Airtel FTTH broadband dataset (18,926 flows)
@@ -225,20 +240,18 @@ python3 scripts/verify_research_results.py
 │   ├── airtel_all_20261113/            # Broadband analysis outputs (WP7-WP11, WP13)
 │   ├── jio_analysis_20261113/          # Jio and cross-network outputs (N1-N8)
 │   └── campus_analysis_20261120/       # Campus & tri-network outputs (C1-C5)
-├── scripts/
+├── scripts/                            # Master execution runners and verification suite
 │   ├── run_airtel_all.py               # Broadband analysis master runner
 │   ├── run_jio_analysis.py             # Cellular & cross-network master runner
-│   ├── run_jio_capture.sh              # 6,000-query cellular capture harness
 │   ├── run_campus_analysis.py          # Campus & tri-network master runner (C1-C5)
-│   ├── run_campus_capture.sh           # 6,000-query campus capture harness
 │   ├── plot_slide_figures.py           # Publication figure generator (Figs 1-4)
 │   ├── plot_tri_network_figures.py     # Tri-network figure generator (Figs 5-6)
 │   └── verify_research_results.py      # 6-check verification suite
-├── src/
+├── src/                                # Core capture & feature extraction library
 │   ├── probe_and_capture.py            # Synchronous probe and dumpcap capture orchestrator
 │   ├── extract_features.py             # 44-feature network flow extraction module
 │   └── encdns/                         # Analysis library (classifiers, baselines, ledger)
-└── tests/                              # Automated test suite (34 unit tests)
+└── tests/                              # Automated test suite (34 unit tests passing)
 ```
 
 ---
@@ -247,8 +260,8 @@ python3 scripts/verify_research_results.py
 
 ### BibTeX Citation
 ```bibtex
-@misc{kashyap2026encrypteddns,
-  author       = {Aman Kashyap},
+@misc{khandelwal2026encrypteddns,
+  author       = {Kunal Khandelwal and Rakesh Mali and Aman Kashyap},
   title        = {Empirical Evaluation of Encrypted DNS Traffic Fingerprinting Across Multi-Carrier and Institutional Networks},
   year         = {2026},
   publisher    = {GitHub},
@@ -258,7 +271,10 @@ python3 scripts/verify_research_results.py
 ```
 
 ### Author Affiliation
-**Aman Kashyap** ([iit2024140@iiita.ac.in](mailto:iit2024140@iiita.ac.in))  
+* **Kunal Khandelwal** (`iit2024162@iiita.ac.in`)
+* **Rakesh Mali** (`iit2024149@iiita.ac.in`)
+* **Aman Kashyap** (`iit2024140@iiita.ac.in`)
+
 Department of Information Technology, Indian Institute of Information Technology, Allahabad (IIIT Allahabad)  
 Research Methodology Coursework, November 2026
 
