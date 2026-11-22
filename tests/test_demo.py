@@ -23,6 +23,13 @@ class TestLiveDemoRunner(unittest.TestCase):
         self.assertIn("youtube.com", res.stdout)
         self.assertIn("CLASSIFIER PREDICTION RESULTS", res.stdout)
 
+    def test_part_2_transport_test(self):
+        cmd = [sys.executable, str(DEMO_SCRIPT), "--part", "2"]
+        res = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(res.returncode, 0, f"Part 2 failed:\n{res.stderr}")
+        self.assertIn("PART 2: LIVE AIRTEL TRANSPORT PROBE", res.stdout)
+        self.assertIn("TRI-NETWORK REACHABILITY CONTRAST", res.stdout)
+
     def test_part_3_verification(self):
         cmd = [sys.executable, str(DEMO_SCRIPT), "--part", "3"]
         res = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
