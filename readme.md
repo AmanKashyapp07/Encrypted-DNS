@@ -4,7 +4,7 @@
 [![Artifact: Functional](https://img.shields.io/badge/Artifacts-Functional-brightgreen.svg)](scripts/verify_research_results.py)
 [![Artifact: Reproduced](https://img.shields.io/badge/Results-Reproduced%20(~6m)-success.svg)](#1-click-artifact-reproducibility-6-minutes)
 [![Python: 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Tests: 40/40 Passing](https://img.shields.io/badge/tests-40%2F40%20passing-brightgreen.svg)](#6-testing--numerical-verification)
+[![Tests: 41/41 Passing](https://img.shields.io/badge/tests-41%2F41%20passing-brightgreen.svg)](#6-testing--numerical-verification)
 [![IEEE Paper: 6-Page Camera Ready](https://img.shields.io/badge/IEEE%20Paper-6--Page%20PDF-red.svg)](paper/paper.pdf)
 [![Final Deliverables](https://img.shields.io/badge/Final-Submission%20Package-green.svg)](final/README.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](license)
@@ -20,6 +20,7 @@ For artifact evaluators, committee members, and researchers reproducing our resu
 | Objective | Section Link | Target Deliverable / Command |
 | :--- | :--- | :--- |
 | **Live Interactive Demo** | [Live Defense Demo CLI](#interactive-live-defense-demo) | `python3 scripts/demo.py` (Interactive defense runner) |
+| **Visual Companion Dashboard** | [Interactive HTML Dashboard](docs/dashboard.html) | `open docs/dashboard.html` (Zero-dependency Web UI) |
 | **Live Demo Speech Script** | [Demo Spoken Script](docs/demo_speech.md) | Word-for-word office demo script & viva defense cards |
 | **Reproduce All Results** | [1-Click Reproducibility](#1-click-artifact-reproducibility-6-minutes) | Execute automated analytical suite in **~6 minutes** |
 | **Verify Claims Ledger** | [Statistical Rigor & Claims Ledger](#4-statistical-rigor--claims-ledger) | `python3 scripts/verify_research_results.py` (**6/6 checks**) |
@@ -147,7 +148,7 @@ All 39 numerical claims, confidence intervals, sample sizes, and source CSVs are
 The repository incorporates automated unit tests, verification checks, and a live demonstration CLI:
 
 ```bash
-# 1. Run full unit test suite (40 tests passing)
+# 1. Run full unit test suite (41 tests passing)
 python3 -m unittest discover tests
 
 # 2. Run numerical consistency & git-history provenance verification (6 checks)
@@ -155,6 +156,9 @@ python3 scripts/verify_research_results.py
 
 # 3. Interactive live defense demo runner
 python3 scripts/demo.py
+
+# 4. Open visual companion dashboard (offline browser UI)
+open docs/dashboard.html
 ```
 
 ### Interactive Live Defense Demo
@@ -228,6 +232,8 @@ python3 scripts/verify_research_results.py
 │   ├── references.bib                  # BibTeX bibliography
 │   └── figures/                        # High-resolution figures used in paper
 ├── docs/                               # Presentation notes & mathematical foundations
+│   ├── dashboard.html                  # Self-contained zero-dependency interactive dashboard
+│   ├── demo_speech.md                  # Word-for-word demo delivery script & viva cards
 │   ├── maths.md                        # Complete mathematical equations & statistical formulas
 │   ├── speech.md                       # Speaker presentation script & timing breakdown
 │   ├── claims_ledger.csv               # Verification ledger mapping 39 claims to pipeline outputs
@@ -264,7 +270,7 @@ python3 scripts/verify_research_results.py
 │   ├── probe_and_capture.py            # Synchronous probe and dumpcap capture orchestrator
 │   ├── extract_features.py             # 44-feature network flow extraction module
 │   └── encdns/                         # Analysis library (classifiers, baselines, ledger)
-└── tests/                              # Automated test suite (40 unit tests passing)
+└── tests/                              # Automated test suite (41 unit tests passing)
 ```
 
 ---

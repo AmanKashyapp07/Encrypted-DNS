@@ -75,4 +75,4 @@ final/
 * **Usable Zero-Leakage Flow Traces:** 22,407 completed flows (18,926 Airtel + 1,912 Jio + 1,569 Campus).
 * **Workloads & Resolvers:** 100 pinned domains (50 Global, 50 India) across 4 upstream recursive resolvers (Google, Cloudflare, Quad9, AdGuard).
 * **Feature Space:** 44 directional flow features (sizes, counts, bursts, inter-arrival times, handshake packet sequences; no IP/port/SNI leakage).
-* **Testing:** 40 automated unit tests (`tests/`) and 6 automated consistency checks (`scripts/verify_research_results.py`).
+* **Testing:** 41 automated unit tests (`tests/`) and 6 automated consistency checks (`scripts/verify_research_results.py`).

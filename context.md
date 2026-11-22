@@ -10,7 +10,8 @@
 **Workspace Path:** `/Users/amankashyap/Documents/DNS-Analysis`  
 **Thesis Directory:** `/Users/amankashyap/Downloads/IIITA_B_Tech_Thesis`  
 **Compiled Paper:** `/Users/amankashyap/Documents/DNS-Analysis/paper/paper.pdf` & `/Users/amankashyap/Downloads/Encrypted_DNS_Research_Paper.pdf`  
-**Demo Delivery Speech Guide:** `/Users/amankashyap/Documents/DNS-Analysis/docs/demo_speech.md`
+**Demo Delivery Speech Guide:** `/Users/amankashyap/Documents/DNS-Analysis/docs/demo_speech.md`  
+**Visual Companion Dashboard:** `/Users/amankashyap/Documents/DNS-Analysis/docs/dashboard.html`
 
 ---
 
@@ -139,9 +140,6 @@ python3 scripts/demo.py --all               # Run all 4 parts end-to-end
   * Tri-Network Contrast: Highlights 0.0% DoH/3 reachability on Jio Cellular (CGNAT/RRC drop) and Campus Wi-Fi (firewall drop).
 * **Part 3 (Verification):** Executes all 6 automated checks in **1.10s** (`ALL 6 CHECKS PASSED`).
 * **Part 4 (Deliverables):** All 6 publication figures, 6-page IEEE paper, 67-page thesis, and 39-claim ledger verified on disk.
-* **Test Suite:** **40 / 40 unit tests passing** across entire repo.
-  * DoH/3 (UDP:443 via direct QUIC): Times out after **4.0s** (Proves middlebox ossification in real time).
-* **Part 3 (Verification):** Executes all 6 automated checks in **1.10s** (`ALL 6 CHECKS PASSED`).
-* **Part 4 (Deliverables):** All 6 publication figures, 6-page IEEE paper, 67-page thesis, and 39-claim ledger verified on disk.
-* **Test Suite:** **39 / 39 unit tests passing** across entire repo.
+* **Test Suite:** **41 / 41 unit tests passing** across entire repo.
+* **Visual Companion Dashboard:** [docs/dashboard.html](file:///Users/amankashyap/Documents/DNS-Analysis/docs/dashboard.html) (Zero-dependency offline HTML dashboard).
 

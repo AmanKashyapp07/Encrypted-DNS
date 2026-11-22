@@ -49,6 +49,11 @@ class TestLiveDemoRunner(unittest.TestCase):
         self.assertEqual(res.returncode, 0, f"Part 5 failed:\n{res.stderr}")
         self.assertIn("VIVA DEFENSE CHEAT SHEET", res.stdout)
 
+    def test_dashboard_html_exists(self):
+        dash = ROOT / "docs" / "dashboard.html"
+        self.assertTrue(dash.exists(), "docs/dashboard.html does not exist")
+        self.assertGreater(dash.stat().st_size, 10000, "docs/dashboard.html is too small")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -523,7 +523,15 @@ def main() -> int:
     parser.add_argument("--domain", type=str, default=None, help="Target domain for Part 1 fingerprinting")
     parser.add_argument("--open", action="store_true", help="Open PDFs/figures in default macOS viewer during Part 4")
     parser.add_argument("--non-interactive", action="store_true", help="Run in non-interactive batch mode")
+    parser.add_argument("--dashboard", action="store_true", help="Open the interactive visual companion dashboard in browser")
     args = parser.parse_args()
+
+    if args.dashboard:
+        dashboard_path = ROOT / "docs/dashboard.html"
+        if dashboard_path.exists():
+            print(cyan(f"Opening interactive visual dashboard: {dashboard_path}"))
+            subprocess.run(["open", str(dashboard_path)])
+        return 0
 
     if args.all:
         run_all_parts()
@@ -557,12 +565,13 @@ def main() -> int:
         print(f"  [{bold('3')}] {cyan('1-Click Scientific Claims Verification')} (39 Claims, Datasets & Commits)")
         print(f"  [{bold('4')}] {cyan('Deliverables & Manuscript Tour')} (Open Paper PDF, Thesis & Figures)")
         print(f"  [{bold('5')}] {cyan('Run Full Demo Sequence')} (Parts 1 -> 2 -> 3 -> 4 Sequentially)")
-        print(f"  [{bold('6')}] {cyan('Viva Defense Q&A Cheat Sheet')} (Oral Questions & Exact Nuance Guide)")
+        print(f"  [{bold('6')}] {cyan('Open Visual Companion Dashboard')} (Interactive HTML in Browser)")
+        print(f"  [{bold('7')}] {cyan('Viva Defense Q&A Cheat Sheet')} (Oral Questions & Exact Nuance Guide)")
         print(f"  [{bold('q')}] {yellow('Quit')}")
         print()
 
         try:
-            choice = input(_c("Enter choice [1-6, q]: ", "1;33")).strip().lower()
+            choice = input(_c("Enter choice [1-7, q]: ", "1;33")).strip().lower()
         except (EOFError, KeyboardInterrupt):
             print("\nExiting demo.")
             break
@@ -578,6 +587,13 @@ def main() -> int:
         elif choice == "5":
             run_all_parts()
         elif choice == "6":
+            dash = ROOT / "docs/dashboard.html"
+            if dash.exists():
+                print(cyan(f"Opening companion dashboard in default browser: {dash}"))
+                subprocess.run(["open", str(dash)])
+            else:
+                print(red(f"Dashboard not found at {dash}"))
+        elif choice == "7":
             run_part_5_viva_cheatsheet()
         elif choice in {"q", "exit", "quit"}:
             print("Exiting demo.")
