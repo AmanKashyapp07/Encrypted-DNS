@@ -4,7 +4,7 @@
 [![Artifact: Functional](https://img.shields.io/badge/Artifacts-Functional-brightgreen.svg)](scripts/verify_research_results.py)
 [![Artifact: Reproduced](https://img.shields.io/badge/Results-Reproduced%20(~6m)-success.svg)](#1-click-artifact-reproducibility-6-minutes)
 [![Python: 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Tests: 34/34 Passing](https://img.shields.io/badge/tests-34%2F34%20passing-brightgreen.svg)](#6-testing--numerical-verification)
+[![Tests: 40/40 Passing](https://img.shields.io/badge/tests-40%2F40%20passing-brightgreen.svg)](#6-testing--numerical-verification)
 [![IEEE Paper: 6-Page Camera Ready](https://img.shields.io/badge/IEEE%20Paper-6--Page%20PDF-red.svg)](paper/paper.pdf)
 [![Final Deliverables](https://img.shields.io/badge/Final-Submission%20Package-green.svg)](final/README.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](license)
@@ -19,6 +19,7 @@ For artifact evaluators, committee members, and researchers reproducing our resu
 
 | Objective | Section Link | Target Deliverable / Command |
 | :--- | :--- | :--- |
+| **Live Interactive Demo** | [Live Defense Demo CLI](#interactive-live-defense-demo) | `python3 scripts/demo.py` (Interactive defense runner) |
 | **Reproduce All Results** | [1-Click Reproducibility](#1-click-artifact-reproducibility-6-minutes) | Execute automated analytical suite in **~6 minutes** |
 | **Verify Claims Ledger** | [Statistical Rigor & Claims Ledger](#4-statistical-rigor--claims-ledger) | `python3 scripts/verify_research_results.py` (**6/6 checks**) |
 | **Inspect Tri-Network Scale** | [Empirical Archetypes](#2-tri-network-empirical-scale--archetypes) | 34,400 raw queries, 22,407 processed feature flows |
@@ -140,17 +141,27 @@ All 39 numerical claims, confidence intervals, sample sizes, and source CSVs are
 
 ---
 
-## 6. Testing & Numerical Verification
+## 6. Testing, Numerical Verification & Live Demo
 
-The repository incorporates automated unit tests and verification checks:
+The repository incorporates automated unit tests, verification checks, and a live demonstration CLI:
 
 ```bash
-# 1. Run full unit test suite (34 tests passing)
+# 1. Run full unit test suite (40 tests passing)
 python3 -m unittest discover tests
 
 # 2. Run numerical consistency & git-history provenance verification (6 checks)
 python3 scripts/verify_research_results.py
+
+# 3. Interactive live defense demo runner
+python3 scripts/demo.py
 ```
+
+### Interactive Live Defense Demo
+For committee evaluations and viva presentations, [`scripts/demo.py`](scripts/demo.py) provides a color-coded interactive demonstration:
+* **Part 1:** Real-time Random Forest inference (<15ms) on 44 flow features, contrasting DoH leakage with DoH/3 suppression.
+* **Part 2:** Live transport probe verifying 98.4% DoH/3 reachability on Airtel broadband, contrasted with 100% QUIC timeouts on Jio cellular and campus Wi-Fi.
+* **Part 3:** 1-Click execution of all 6 claims verification checks in 1.1s.
+* **Part 4:** 1-Click deliverables tour auto-opening the IEEE paper and figures.
 
 ### Zero Label Leakage Verification
 All models are verified against label leakage: client/resolver IP addresses, TCP/UDP ports, SNI hostnames, and transport payload bytes are discarded during feature extraction. Classifiers learn exclusively from aggregate flow sizes, burst sequences, and inter-arrival timing dynamics.
@@ -241,6 +252,7 @@ python3 scripts/verify_research_results.py
 │   ├── jio_analysis_20261113/          # Jio and cross-network outputs (N1-N8)
 │   └── campus_analysis_20261120/       # Campus & tri-network outputs (C1-C5)
 ├── scripts/                            # Master execution runners and verification suite
+│   ├── demo.py                         # Interactive live defense & verification runner
 │   ├── run_airtel_all.py               # Broadband analysis master runner
 │   ├── run_jio_analysis.py             # Cellular & cross-network master runner
 │   ├── run_campus_analysis.py          # Campus & tri-network master runner (C1-C5)
@@ -251,7 +263,7 @@ python3 scripts/verify_research_results.py
 │   ├── probe_and_capture.py            # Synchronous probe and dumpcap capture orchestrator
 │   ├── extract_features.py             # 44-feature network flow extraction module
 │   └── encdns/                         # Analysis library (classifiers, baselines, ledger)
-└── tests/                              # Automated test suite (34 unit tests passing)
+└── tests/                              # Automated test suite (40 unit tests passing)
 ```
 
 ---
