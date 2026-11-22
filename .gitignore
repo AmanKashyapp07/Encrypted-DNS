@@ -28,12 +28,30 @@ ENV/
 temp.txt
 *.log
 *.tmp
+*.blg
+*.aux
+*.bbl
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.xdv
+
+# Office documents and scratch binaries
+*.docx
+*.doc
+*.xlsx
+*.xls
 
 # Documents, roadmaps, speeches, presentations, and research papers
-# Project documentation is versioned; private source papers and presentations remain local.
+# Project documentation is versioned; private source presentations remain local.
 Progress/
 notebooks/
 *.pdf
+!paper/paper.pdf
 *.pptx
 Project_topic.png
 
