@@ -20,6 +20,7 @@ For artifact evaluators, committee members, and researchers reproducing our resu
 | Objective | Section Link | Target Deliverable / Command |
 | :--- | :--- | :--- |
 | **Live Interactive Demo** | [Live Defense Demo CLI](#interactive-live-defense-demo) | `python3 scripts/demo.py` (Interactive defense runner) |
+| **Live Demo Speech Script** | [Demo Spoken Script](docs/demo_speech.md) | Word-for-word office demo script & viva defense cards |
 | **Reproduce All Results** | [1-Click Reproducibility](#1-click-artifact-reproducibility-6-minutes) | Execute automated analytical suite in **~6 minutes** |
 | **Verify Claims Ledger** | [Statistical Rigor & Claims Ledger](#4-statistical-rigor--claims-ledger) | `python3 scripts/verify_research_results.py` (**6/6 checks**) |
 | **Inspect Tri-Network Scale** | [Empirical Archetypes](#2-tri-network-empirical-scale--archetypes) | 34,400 raw queries, 22,407 processed feature flows |

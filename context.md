@@ -9,7 +9,8 @@
 **Repository:** `https://github.com/AmanKashyapp07/Encrypted-DNS.git` (Branch: `main`)  
 **Workspace Path:** `/Users/amankashyap/Documents/DNS-Analysis`  
 **Thesis Directory:** `/Users/amankashyap/Downloads/IIITA_B_Tech_Thesis`  
-**Compiled Paper:** `/Users/amankashyap/Documents/DNS-Analysis/paper/paper.pdf` & `/Users/amankashyap/Downloads/Encrypted_DNS_Research_Paper.pdf`
+**Compiled Paper:** `/Users/amankashyap/Documents/DNS-Analysis/paper/paper.pdf` & `/Users/amankashyap/Downloads/Encrypted_DNS_Research_Paper.pdf`  
+**Demo Delivery Speech Guide:** `/Users/amankashyap/Documents/DNS-Analysis/docs/demo_speech.md`
 
 ---
 
