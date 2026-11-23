@@ -274,7 +274,7 @@ def _get_network_info(clean_env: dict[str, str]) -> tuple[str, str]:
 def run_part_2_transport_test(timeout_sec: int = 4) -> None:
     banner(
         "PART 2: LIVE AIRTEL TRANSPORT PROBE & MULTI-CARRIER AUDIT",
-        "Direct Optical FTTH Routing: Live Verification of 98.4% DoH/3 Reachability",
+        "Bharti Airtel Routing: Live Verification of 98.4% DoH/3 Reachability",
     )
     q_bin = shutil.which("q") or "/opt/homebrew/bin/q"
     if not Path(q_bin).exists():
@@ -290,7 +290,7 @@ def run_part_2_transport_test(timeout_sec: int = 4) -> None:
     print(cyan("Network Environment:"))
     print(f"  • {bold('Active Carrier / ISP:')}  {green(isp_name)}")
     print(f"  • {bold('Public IP Address:')}    {dim(public_ip)}")
-    print(f"  • {bold('Transport Profile:')}   Residential FTTH / Direct Routing (UDP:443 OPEN, MTU 1,500B)")
+    print(f"  • {bold('Transport Profile:')}   Airtel Infrastructure / Direct Routing (UDP:443 OPEN)")
     print()
 
     domain = "wikipedia.org"
