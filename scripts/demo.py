@@ -240,10 +240,14 @@ def run_part_1_fingerprinting(interactive: bool = True, target_domain: str | Non
         h3_top1_p = probs_h3[h3_top1_idx]
         h3_target_p = probs_h3[list(rf_h3.classes_).index(selected_domain)] if selected_domain in rf_h3.classes_ else 0.0
 
+        sample_drop = ((top1_prob - h3_target_p) / top1_prob) * 100.0 if top1_prob > 0 else 0.0
+        leakage_mult = top1_prob / (chance_baseline / 100.0) if chance_baseline > 0 else 1.0
         print(f"   • {bold('DoH   (RFC 8484 TLS/TCP):')} Top-1={bold(top1_pred)} ({top1_prob*100:.1f}% conf) "
-              f"-> {green('Severe Side-Channel Leakage (>30x chance)')}")
+              f"-> {green(f'Severe Side-Channel Leakage ({leakage_mult:.0f}x chance baseline)')}")
         print(f"   • {bold('DoH/3 (RFC 9114 QUIC/UDP):')} Target Conf={h3_target_p*100:.1f}% (Top-1={h3_top1_dom} @ {h3_top1_p*100:.1f}%) "
-              f"-> {cyan('Suppressed to Near-Chance Level (87% Leakage Drop)')}")
+              f"-> {cyan(f'Target Suppressed by {sample_drop:.0f}% on this sample (collapses to {h3_target_p*100:.1f}%)')}")
+        print(f"   • {bold('Macro Population Benchmark:')} Quad9 100-domain Top-1 accuracy drops from {bold('34.4% → 4.6%')} "
+              f"({bold(green('86.6% Aggregate Leakage Suppression'))} across 1,000 flows)")
     else:
         print(f"   • Quad9 DoH headline leakage: 34.4% -> DoH/3: 4.6% (87% reduction).")
     print()
